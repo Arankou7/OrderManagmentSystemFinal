@@ -1,0 +1,31 @@
+# --- Secrets (NEVER UPLOAD THESE) ---
+.env
+*.key
+*.p12
+*.jks
+
+# --- Java & Maven ---
+target/
+*.class
+.mvn/
+mvnw
+mvnw.cmd
+*.log
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iml
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Frontend (Node.js) ---
+node_modules/
+dist/
+build/
+.npm/
+.eslintcache
+
+# --- System Files ---
+.DS_Store
+Thumbs.db
