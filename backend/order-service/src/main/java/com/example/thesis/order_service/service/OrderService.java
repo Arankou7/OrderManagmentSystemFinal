@@ -24,7 +24,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final InventoryClient inventoryClient;
-    private final ProductClient productClient; // <--- CHANGED: Inject ProductClient
+    private final ProductClient productClient;
     private final RabbitTemplate rabbitTemplate;
 
     @CircuitBreaker(name = "inventory",fallbackMethod = "fallback")
@@ -87,14 +87,12 @@ public class OrderService {
     }
 
     private OrderLineItems mapToEntity(OrderLineItemsRequest request) {
-        // <--- CHANGED: Call Product Service to get REAL price and name
         ProductResponse product = productClient.getProductBySku(request.skuCode());
 
         OrderLineItems lineItems = new OrderLineItems();
         lineItems.setSkuCode(request.skuCode());
         lineItems.setQuantity(request.quantity());
 
-        // <--- CHANGED: Use data from Product Service (Secure), NOT from User Request
         lineItems.setPrice(product.price());
         lineItems.setProductName(product.name());
 

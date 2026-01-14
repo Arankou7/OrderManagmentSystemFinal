@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class NotificationService {
 
-    // This name must match the QUEUE_NAME in your RabbitMQConfig
     @RabbitListener(queues = "notificationQueue")
     public void handleNotification(OrderPlacedEvent orderPlacedEvent) {
         log.info("---------------------------------");
