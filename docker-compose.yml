@@ -1,16 +1,35 @@
-version: '3.8'
+# version: '3.8'  <-- You can delete this line, it is obsolete now.
+
 services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
     ports:
-      - "5672:5672"   # Port for Java applications
-      - "15672:15672" # Port for the Web Dashboard
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin
     ports:
       - "9411:9411"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.1
+    container_name: keycloak
+    user: root
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8180:8080"
+    volumes:
+      - keycloak_data_new:/opt/keycloak/data/h2
+
+volumes:
+  keycloak_data_new:
+    driver: local
