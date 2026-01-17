@@ -1,5 +1,5 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"; // 👈 Import Navigate
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import keycloak from "./Keycloak";
 
 // Layouts & Pages
@@ -22,14 +22,11 @@ function App() {
       ],
     },
     
-    // 👇 ADD THIS MAGIC LINE HERE:
-    // It says: "If user lands on /signin, instantly go to /"
     {
       path: "/signin",
       element: <Navigate to="/" replace />
     },
 
-    // Optional: Catch any other weird 404s and send them Home too
     {
       path: "*",
       element: <Navigate to="/" replace />

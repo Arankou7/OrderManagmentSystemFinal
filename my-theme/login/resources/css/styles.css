@@ -1,0 +1,151 @@
+/* ========================================
+   COLOR SCHEME - Brand Identity
+   ======================================== */
+:root {
+    /* Primary Brand */
+    --color-primary: #0F172A;      /* Deep Navy */
+    
+    /* Action / Buttons */
+    --color-action: #F97316;       /* Vibrant Orange */
+    
+    /* Background */
+    --color-bg: #F1F5F9;           /* Slate Grey */
+    
+    /* Cards / Panels */
+    --color-card: #FFFFFF;         /* Pure White */
+    
+    /* Text */
+    --color-text: #334155;         /* Charcoal */
+    
+    /* Additional utilities */
+    --color-text-light: #64748B;   /* Light Grey for secondary text */
+    --color-border: #E2E8F0;       /* Light border color */
+    --color-hover: #EA580C;        /* Darker orange for hover states */
+}
+
+/* 1. Background & Layout (Fixed the stretching issue) */
+body {
+    background-image: url('../img/loginback.jpeg') !important;
+    
+    /* 🌟 Fix Image Stretching & Locking 🌟 */
+    background-size: cover !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+    background-repeat: no-repeat !important;
+    
+    /* Center Layout */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    
+    /* Font & Dark Overlay for readability */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.6) !important; /* Navy Tint Overlay */
+}
+
+/* 2. Reset Keycloak Wrappers */
+#kc-container, #kc-content, #kc-content-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* 3. The Main Card (Titan Style) */
+.login-pf-page .card-pf {
+    background-color: var(--color-card) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; /* Modern deep shadow */
+    border-radius: 8px !important;
+    
+    /* 🌟 BRAND COLOR: Deep Navy Top Border 🌟 */
+    border-top: 6px solid var(--color-primary) !important; 
+    
+    width: 420px !important;
+    max-width: 90vw !important;
+    padding: 40px !important;
+    margin: 0 !important;
+}
+
+/* 4. Title Text */
+#kc-header-wrapper {
+    margin-bottom: 25px !important;
+    color: #ffffff !important;
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+/* 5. Input Fields */
+input.form-control {
+    border: 2px solid var(--color-border) !important; /* Light Slate Border */
+    border-radius: 6px !important;
+    padding: 12px !important;
+    height: 48px !important;
+    font-size: 16px !important;
+    color: var(--color-primary) !important;
+    background-color: #F8FAFC !important;
+    margin-bottom: 15px !important;
+}
+
+input.form-control:focus {
+    /* 🌟 ACCENT: Orange Glow on Focus 🌟 */
+    border-color: var(--color-action) !important; 
+    background-color: #fff !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2) !important;
+    outline: none !important;
+}
+
+/* 6. The "Sign In" Button */
+#kc-form-buttons .btn-primary {
+    /* 🌟 ACCENT: Vibrant Orange Button 🌟 */
+    background-color: var(--color-action) !important;
+    border: none !important;
+    color: white !important;
+    
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    width: 100% !important;
+    height: 48px !important;
+    margin-top: 20px !important;
+    border-radius: 6px !important;
+    cursor: pointer;
+    transition: background-color 0.2s ease !important;
+}
+
+#kc-form-buttons .btn-primary:hover {
+    background-color: var(--color-hover) !important; /* Darker Orange on Hover */
+}
+
+/* 7. Bottom Links */
+#kc-registration {
+    margin-top: 30px !important;
+    text-align: center !important;
+    border-top: 1px solid var(--color-border) !important;
+    padding-top: 20px !important;
+    font-size: 14px !important;
+    color: var(--color-text-light) !important; /* Slate Grey Text */
+}
+
+#kc-registration a {
+    color: var(--color-primary) !important; /* Navy Blue Link */
+    font-weight: 700 !important;
+    text-decoration: none !important;
+}
+
+#kc-registration a:hover {
+    color: var(--color-action) !important; /* Orange on hover */
+    text-decoration: underline !important;
+}

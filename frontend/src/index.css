@@ -1,0 +1,55 @@
+/* ========================================
+   COLOR SCHEME - Brand Identity
+   ======================================== */
+:root {
+  /* Primary Brand */
+  --color-primary: #0F172A;      /* Deep Navy */
+  
+  /* Action / Buttons */
+  --color-action: #F97316;       /* Vibrant Orange */
+  
+  /* Background */
+  --color-bg: #F1F5F9;           /* Slate Grey */
+  
+  /* Cards / Panels */
+  --color-card: #FFFFFF;         /* Pure White */
+  
+  /* Text */
+  --color-text: #334155;         /* Charcoal */
+  
+  /* Additional utilities */
+  --color-text-light: #64748B;   /* Light Grey for secondary text */
+  --color-border: #E2E8F0;       /* Light border color */
+  --color-hover: #EA580C;        /* Darker orange for hover states */
+}
+
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+

@@ -11,15 +11,26 @@ const RootLayout = () => {
     };
 
     return (
-        <div>
+        <div style={{ backgroundColor: 'var(--color-bg)', minHeight: '100vh' }}>
             {/* Navigation Bar */}
-            <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-                <div className="container">
-                    <Link className="navbar-brand" to="/">📦 Order System</Link>
-                    <div className="d-flex gap-3">
+            <nav className="navbar mb-4" style={{ backgroundColor: 'var(--color-primary)' }}>
+                <div style={{ display: 'flex', width: '100%', alignItems: 'center', padding: '1rem 2rem', justifyContent: 'space-between' }}>
+                    {/* Left: Logo */}
+                    <Link className="navbar-brand" to="/" style={{ color: 'var(--color-card)', fontSize: '1.5rem', fontWeight: '700', margin: 0, flex: 1 }}>
+                        📦 Order System
+                    </Link>
+
+                    {/* Center: Navigation Links */}
+                    <div style={{ display: 'flex', gap: '1rem', flex: 1, justifyContent: 'center' }}>
                         <Link className="btn btn-outline-light" to="/">Home</Link>
                         <Link className="btn btn-outline-light" to="/reservation">Orders</Link>
-                        <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+                    </div>
+
+                    {/* Right: Logout Button */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <button onClick={handleLogout} className="btn" style={{ backgroundColor: 'var(--color-action)', color: 'var(--color-card)', border: 'none', fontWeight: '600' }}>
+                            Logout
+                        </button>
                     </div>
                 </div>
             </nav>
