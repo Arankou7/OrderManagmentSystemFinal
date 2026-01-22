@@ -1,4 +1,4 @@
-# --- Secrets (NEVER UPLOAD THESE) ---
+# --- Secrets---
 .env
 *.key
 *.p12
@@ -9,7 +9,7 @@ target/
 *.class
 *.log
 
-# --- IDEs (IntelliJ & VS Code) ---
+# --- IDEs---
 .idea/
 *.iml
 .vscode/
@@ -17,7 +17,7 @@ target/
 # --- Docker ---
 docker-compose.override.yml
 
-# --- Frontend (Node.js) ---
+# --- Frontend---
 node_modules/
 dist/
 build/
