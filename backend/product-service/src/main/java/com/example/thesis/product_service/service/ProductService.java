@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,7 +23,6 @@ public class ProductService {
 
     public ProductResponse createProduct(ProductRequest request) {
 
-        // 1. Generate a meaningful SKU
         String skuCode = generateSku(request.name(), request.attributes());
 
         Product product = Product.builder()
@@ -31,7 +31,8 @@ public class ProductService {
                 .price(request.price())
                 .category(request.category())
                 .status(request.status())
-                .skuCode(skuCode) // <--- Set the readable SKU here
+                .skuCode(skuCode)
+                .attributes(new ArrayList<>())
                 .build();
 
         if (request.attributes() != null) {
@@ -52,22 +53,23 @@ public class ProductService {
         return mapToResponse(saved);
     }
 
-
     private ProductResponse mapToResponse(Product product) {
         return new ProductResponse(
+                product.getId(),
+                product.getSkuCode(),
                 product.getName(),
                 product.getDescription(),
                 product.getPrice(),
                 product.getCategory(),
                 product.getStatus(),
-                product.getAttributes()
-                        .stream()
-                        .map(attr -> new ProductAttributeResponse(
-                                attr.getId(),
-                                attr.getAttributeKey(),
-                                attr.getAttributeValue()
-                        ))
-                        .toList()
+                product.getAttributes() == null ? new ArrayList<>() :
+                        product.getAttributes().stream()
+                                .map(attr -> new ProductAttributeResponse(
+                                        attr.getId(),
+                                        attr.getAttributeKey(),
+                                        attr.getAttributeValue()
+                                ))
+                                .toList()
         );
     }
 
