@@ -20,13 +20,10 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity serverHttpSecurity) {
         serverHttpSecurity
-                // 1. Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 2. Disable CSRF
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
 
-                // 3. Define Rules
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/eureka/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/product", "/api/product/**").permitAll()

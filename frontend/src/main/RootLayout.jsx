@@ -1,9 +1,12 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import keycloak from '../Keycloak';
+import { useContext } from 'react';
+import { CartContext } from '../context/CartContext';
 
 const RootLayout = () => {
     const navigate = useNavigate();
+    const { getTotalItems } = useContext(CartContext);
 
     const handleLogout = () => {
         keycloak.logout();
@@ -24,6 +27,24 @@ const RootLayout = () => {
                     <div style={{ display: 'flex', gap: '1rem', flex: 1, justifyContent: 'center' }}>
                         <Link className="btn btn-outline-light" to="/">Home</Link>
                         <Link className="btn btn-outline-light" to="/reservation">Orders</Link>
+                        <Link className="btn btn-outline-light" to="/cart" style={{ position: 'relative' }}>
+                            🛒 Cart
+                            <span style={{
+                                position: 'absolute',
+                                top: '-8px',
+                                right: '-8px',
+                                backgroundColor: 'var(--color-action)',
+                                color: 'white',
+                                borderRadius: '50%',
+                                width: '24px',
+                                height: '24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold'
+                            }}>{getTotalItems()}</span>
+                        </Link>
                     </div>
 
                     {/* Right: Logout Button */}

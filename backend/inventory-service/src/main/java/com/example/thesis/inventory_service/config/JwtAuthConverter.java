@@ -39,16 +39,16 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         Map<String, Object> realmAccess;
         Collection<String> roles;
 
-        // 1. Check if the token actually has "realm_access"
+        //check if the token actually has "realm_access"
         if (jwt.getClaim("realm_access") == null) {
             return Set.of();
         }
 
-        // 2. Extract the roles list
+        //extract the roles list
         realmAccess = jwt.getClaim("realm_access");
         roles = (Collection<String>) realmAccess.get("roles");
 
-        // 3. Convert them to "ROLE_USER" format (Spring Security standard)
+        //convert them to ROLE_USER format
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                 .collect(Collectors.toSet());

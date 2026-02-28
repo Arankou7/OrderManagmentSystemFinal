@@ -1,7 +1,7 @@
 package com.example.thesis.order_service.service;
 
 import com.example.thesis.order_service.client.InventoryClient;
-import com.example.thesis.order_service.client.ProductClient; // <--- CHANGED: Import ProductClient
+import com.example.thesis.order_service.client.ProductClient;
 import com.example.thesis.order_service.dto.*;
 import com.example.thesis.order_service.event.OrderPlacedEvent;
 import com.example.thesis.order_service.model.Order;
@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 import java.util.UUID;

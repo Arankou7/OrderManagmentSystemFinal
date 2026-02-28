@@ -1,10 +1,13 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import keycloak from "./Keycloak";
+import { CartProvider } from "./context/CartContext";
 
 // Layouts & Pages
 import RootLayout from "./main/RootLayout";
 import Home from "./pages/Home";
+import Cart from "./pages/Cart";
+import ProductDetail from "./pages/ProductDetail/ProductDetail";
 
 // Placeholders
 const Reservation = () => <h2>Reservation Page 📅</h2>;
@@ -17,6 +20,8 @@ function App() {
       element: <RootLayout />,
       children: [
         { index: true, element: <Home /> },
+        { path: "cart", element: <Cart /> },
+        { path: "product/:productId", element: <ProductDetail /> },
         { path: "reservation", element: <Reservation /> },
         { path: "profile", element: <Profile /> },
       ],
@@ -33,7 +38,11 @@ function App() {
     }
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <CartProvider>
+      <RouterProvider router={router} />
+    </CartProvider>
+  );
 }
 
 export default App;
