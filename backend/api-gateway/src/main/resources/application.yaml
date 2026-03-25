@@ -44,6 +44,10 @@ spring:
             - Path=/eureka/web
           filters:
             - SetPath=/
+        - id: cart-service
+          uri: lb://cart-service
+          predicates:
+            - Path=/api/cart/**
 
 eureka:
   client:

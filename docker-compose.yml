@@ -28,6 +28,17 @@ services:
     volumes:
       - keycloak_data_new:/opt/keycloak/data/h2
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
 volumes:
   keycloak_data_new:
+    driver: local
+  redis_data:
     driver: local

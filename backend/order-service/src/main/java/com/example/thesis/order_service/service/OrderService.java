@@ -1,5 +1,6 @@
 package com.example.thesis.order_service.service;
 
+import com.example.thesis.order_service.client.CartClient;
 import com.example.thesis.order_service.client.InventoryClient;
 import com.example.thesis.order_service.client.ProductClient;
 import com.example.thesis.order_service.dto.*;
@@ -27,11 +28,18 @@ public class OrderService {
     private final InventoryClient inventoryClient;
     private final ProductClient productClient;
     private final RabbitTemplate rabbitTemplate;
+    private final CartClient cartClient;
 
-    @CircuitBreaker(name = "inventory",fallbackMethod = "fallback")
-    public OrderResponse placeOrder(OrderRequest orderRequest) {
+    @CircuitBreaker(name = "inventory", fallbackMethod = "fallback")
+    public OrderResponse placeOrder(OrderRequest orderRequest, String authHeader) {
 
-        List<InventoryCheckItem> inventoryItems = orderRequest.orderLineItems()
+        CartResponse cart = cartClient.getCart(authHeader);
+
+        if (cart == null || cart.items() == null || cart.items().isEmpty()) {
+            throw new RuntimeException("Cannot place order. Cart is empty!");
+        }
+
+        List<InventoryCheckItem> inventoryItems = cart.items()
                 .stream()
                 .map(item -> new InventoryCheckItem(item.skuCode(), item.quantity()))
                 .toList();
@@ -53,29 +61,39 @@ public class OrderService {
                 .status(OrderStatus.PENDING)
                 .build();
 
-        List<OrderLineItems> orderLineItems = orderRequest.orderLineItems()
+        List<OrderLineItems> orderLineItems = cart.items()
                 .stream()
-                .map(this::mapToEntity)
+                .map(cartItem -> {
+                    OrderLineItems lineItem = new OrderLineItems();
+                    lineItem.setSkuCode(cartItem.skuCode());
+                    lineItem.setPrice(cartItem.price());
+                    lineItem.setQuantity(cartItem.quantity());
+
+                    lineItem.setProductName(cartItem.productName());
+
+                    lineItem.setOrder(order);
+                    return lineItem;
+                })
                 .toList();
 
-        orderLineItems.forEach(item -> item.setOrder(order));
         order.setOrderLineItems(orderLineItems);
 
         orderRepository.save(order);
 
-        OrderPlacedEvent event = new OrderPlacedEvent(order.getOrderNumber(), order.getCustomerEmail());
+        cartClient.clearCart(authHeader);
 
+        OrderPlacedEvent event = new OrderPlacedEvent(order.getOrderNumber(), order.getCustomerEmail());
         rabbitTemplate.convertAndSend("orderExchange", "order.placed", event);
 
         log.info("Notification sent for order {}", order.getOrderNumber());
-
         log.info("Order {} placed successfully", order.getOrderNumber());
+
         return mapToOrderResponse(order);
     }
 
-    private OrderResponse fallback(OrderRequest orderRequest, Throwable runtimeException) {
-        System.out.println("Cannot Place Order. Executing Fallback logic. Error: " + runtimeException.getMessage());
-        return new OrderResponse(null, "Oops! Inventory service is down. Please try again later.", null, null);
+    public OrderResponse fallback(OrderRequest orderRequest, String authHeader, Throwable throwable) {
+        log.error("Circuit breaker triggered: {}", throwable.getMessage());
+        throw new RuntimeException("Oops! Something went wrong, please try again later.");
     }
 
     private OrderResponse mapToOrderResponse(Order order) {
