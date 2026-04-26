@@ -26,7 +26,7 @@ const RootLayout = () => {
                     {/* Center: Navigation Links */}
                     <div style={{ display: 'flex', gap: '1rem', flex: 1, justifyContent: 'center' }}>
                         <Link className="btn btn-outline-light" to="/">Home</Link>
-                        <Link className="btn btn-outline-light" to="/reservation">Orders</Link>
+                        <Link className="btn btn-outline-light" to="/orders">Orders</Link>
                         <Link className="btn btn-outline-light" to="/cart" style={{ position: 'relative' }}>
                             🛒 Cart
                             <span style={{
@@ -56,7 +56,6 @@ const RootLayout = () => {
                 </div>
             </nav>
 
-            {/* This is where the child pages (Home, Reservation) appear */}
             <div className="container">
                 <Outlet />
             </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion'; // 👈 Import added
 
 const ProductCard = ({ product, onAddToCart }) => {
     const { id, name, price, description, category, skuCode } = product || {};
@@ -15,7 +16,16 @@ const ProductCard = ({ product, onAddToCart }) => {
     };
 
     return (
-        <div 
+        <motion.div 
+            layout // 👈 Makes the card smoothly slide to its new spot when filtering
+            initial={{ opacity: 0, scale: 0.9 }} // 👈 Starting state (invisible & slightly small)
+            animate={{ opacity: 1, scale: 1 }}   // 👈 End state (fully visible)
+            exit={{ opacity: 0, scale: 0.9 }}    // 👈 Exit state when filtered out
+            transition={{ duration: 0.3 }}
+            whileHover={{ 
+                y: -4, 
+                boxShadow: '0 10px 25px rgba(15, 23, 42, 0.1)' 
+            }} // 👈 Replaces your onMouseEnter/Leave!
             onClick={handleCardClick}
             style={{
                 backgroundColor: 'var(--color-card)',
@@ -23,19 +33,10 @@ const ProductCard = ({ product, onAddToCart }) => {
                 border: '1px solid var(--color-border)',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
                 cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(15, 23, 42, 0.1)';
-                e.currentTarget.style.transform = 'translateY(-4px)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                e.currentTarget.style.transform = 'translateY(0)';
             }}
         >
             {/* Product Image */}
@@ -86,7 +87,12 @@ const ProductCard = ({ product, onAddToCart }) => {
                     }}>
                         ${price}
                     </span>
-                    <button 
+                    <motion.button 
+                        whileHover={{ 
+                            backgroundColor: 'var(--color-hover)',
+                            y: -2 
+                        }} // 👈 Upgraded button hover
+                        whileTap={{ scale: 0.95 }} // Adds a click "press" effect!
                         onClick={handleAddToCartClick}
                         style={{
                             backgroundColor: 'var(--color-action)',
@@ -95,23 +101,14 @@ const ProductCard = ({ product, onAddToCart }) => {
                             borderRadius: '6px',
                             padding: '0.5rem 1rem',
                             fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--color-hover)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--color-action)';
-                            e.currentTarget.style.transform = 'translateY(0)';
+                            cursor: 'pointer'
                         }}
                     >
                         Add to Cart
-                    </button>
+                    </motion.button>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

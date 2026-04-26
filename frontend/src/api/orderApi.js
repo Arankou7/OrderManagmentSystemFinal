@@ -27,3 +27,20 @@ export const createOrder = async () => {
         throw error;
     }
 };
+
+/**
+ * Fetches all orders for the currently authenticated user
+ * GET /api/order/my-orders
+ * * @returns {Promise<Array>} List of user orders
+ * @throws {Error} If the request fails
+ */
+export const getMyOrders = async () => {
+    try {
+        // Axios automatically handles the base URL and Keycloak headers
+        const response = await api.get('/order/my-orders');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        throw error;
+    }
+};

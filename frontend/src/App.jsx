@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import keycloak from "./Keycloak";
 import { CartProvider } from "./context/CartContext";
 import { ToastContainer } from 'react-toastify';
+import Orders from "./pages/Orders";
 import 'react-toastify/dist/ReactToastify.css';
 
 // Layouts & Pages
@@ -12,8 +13,6 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 
-// Placeholders
-const Reservation = () => <h2>Reservation Page 📅</h2>;
 const Profile = () => <h2>User Profile 👤</h2>;
 
 function App() {
@@ -26,16 +25,14 @@ function App() {
         { path: "cart", element: <Cart /> },
         { path: "checkout", element: <Checkout /> },
         { path: "product/:productId", element: <ProductDetail /> },
-        { path: "reservation", element: <Reservation /> },
+        { path: "orders", element: <Orders /> },
         { path: "profile", element: <Profile /> },
       ],
     },
-    
     {
       path: "/signin",
       element: <Navigate to="/" replace />
     },
-
     {
       path: "*",
       element: <Navigate to="/" replace />

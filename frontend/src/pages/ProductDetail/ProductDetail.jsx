@@ -4,7 +4,6 @@ import { fetchProducts } from '../../api/productApi';
 import ProductImages from './components/ProductImages';
 import ProductInfo from './components/ProductInfo';
 import ProductCharacteristics from './components/ProductCharacteristics';
-import ProductReviews from './components/ProductReviews';
 import RelatedProducts from './components/RelatedProducts';
 
 const ProductDetail = () => {
@@ -151,13 +150,6 @@ const ProductDetail = () => {
                     marginBottom: '4rem'
                 }}>
                     <ProductCharacteristics product={product} />
-                </div>
-
-                {/* Reviews Section */}
-                <div style={{
-                    marginBottom: '4rem'
-                }}>
-                    <ProductReviews />
                 </div>
 
                 {/* Related Products Section */}

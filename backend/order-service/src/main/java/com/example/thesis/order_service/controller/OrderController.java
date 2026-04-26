@@ -6,6 +6,8 @@ import com.example.thesis.order_service.model.OrderStatus;
 import com.example.thesis.order_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,6 +47,21 @@ public class OrderController {
     @GetMapping("/customer/{email}")
     @ResponseStatus(HttpStatus.OK)
     public List<OrderResponse> getOrdersByCustomer(@PathVariable String email) {
+        return orderService.getOrdersByCustomer(email);
+    }
+
+    @GetMapping("/my-orders")
+    @ResponseStatus(HttpStatus.OK)
+    public List<OrderResponse> getMyOrders(@AuthenticationPrincipal Jwt jwt) {
+
+        String email = jwt.getClaimAsString("email");
+        if (email == null || email.isEmpty()) {
+            email = jwt.getClaimAsString("preferred_username");
+        }
+        if (email == null || email.isEmpty()) {
+            email = jwt.getSubject();
+        }
+
         return orderService.getOrdersByCustomer(email);
     }
 

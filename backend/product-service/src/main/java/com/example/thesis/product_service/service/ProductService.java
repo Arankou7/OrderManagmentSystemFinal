@@ -103,6 +103,7 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+
     private String generateSku() {
         Random random = new Random();
         String newSku;

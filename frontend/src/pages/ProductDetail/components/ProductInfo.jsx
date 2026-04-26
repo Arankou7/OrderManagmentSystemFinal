@@ -59,23 +59,6 @@ const ProductInfo = ({ product }) => {
                     }
                 }
             `}</style>
-            {/* Rating and Reviews */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-            }}>
-                <div style={{
-                    color: 'var(--color-action)',
-                    fontSize: '1rem'
-                }}>
-                    ⭐⭐⭐⭐⭐
-                </div>
-                <span style={{ color: 'var(--color-text-light)' }}>
-                    (245 reviews)
-                </span>
-            </div>
-
             {/* Title */}
             <div>
                 <h1 style={{
@@ -113,23 +96,6 @@ const ProductInfo = ({ product }) => {
                         color: 'var(--color-action)'
                     }}>
                         ${product?.price}
-                    </span>
-                    <span style={{
-                        fontSize: '1rem',
-                        color: 'var(--color-text-light)',
-                        textDecoration: 'line-through'
-                    }}>
-                        ${(product?.price * 1.2).toFixed(2)}
-                    </span>
-                    <span style={{
-                        backgroundColor: 'var(--color-action)',
-                        color: 'white',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '4px',
-                        fontSize: '0.9rem',
-                        fontWeight: '600'
-                    }}>
-                        Save 20%
                     </span>
                 </div>
 
