@@ -13,6 +13,9 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 
@@ -39,26 +42,25 @@ public class OrderService {
             throw new RuntimeException("Cannot place order. Cart is empty!");
         }
 
-        List<InventoryCheckItem> inventoryItems = cart.items()
-                .stream()
-                .map(item -> new InventoryCheckItem(item.skuCode(), item.quantity()))
-                .toList();
-
-        InventoryCheckRequest checkRequest = new InventoryCheckRequest(inventoryItems);
-
-        InventoryCheckResponse response = inventoryClient.checkInventory(checkRequest);
-
-        boolean allProductsInStock = inventoryItems.stream()
-                .allMatch(item -> response.availability().getOrDefault(item.skuCode(), false));
-
-        if (!allProductsInStock) {
-            throw new RuntimeException("One or more products are not in stock, order failed.");
+        // Extract the customer email from the JWT token
+        String customerEmail = extractEmailFromJwt();
+        if (customerEmail == null || customerEmail.isEmpty()) {
+            throw new RuntimeException("Cannot extract customer email from token!");
         }
 
+        // 1. Calculate the reservation ID that the Cart MS used
+        // Assuming cart.id() returns the User ID string!
+        UUID cartReservationId = UUID.nameUUIDFromBytes(cart.id().getBytes());
+
+        // 2. CONFIRM the reservation in the Inventory MS
+        // This will permanently deduct the totalQuantity and delete the temporary reservation
+        inventoryClient.confirmReservation(authHeader, cartReservationId);
+
+        // 3. Create the actual Order with a fresh, final Order Number
         Order order = Order.builder()
                 .orderNumber(UUID.randomUUID())
-                .customerEmail(orderRequest.customerEmail())
-                .status(OrderStatus.PENDING)
+                .customerEmail(customerEmail)
+                .status(OrderStatus.PENDING) // Or COMPLETED, up to you!
                 .build();
 
         List<OrderLineItems> orderLineItems = cart.items()
@@ -68,20 +70,21 @@ public class OrderService {
                     lineItem.setSkuCode(cartItem.skuCode());
                     lineItem.setPrice(cartItem.price());
                     lineItem.setQuantity(cartItem.quantity());
-
                     lineItem.setProductName(cartItem.productName());
-
                     lineItem.setOrder(order);
                     return lineItem;
                 })
                 .toList();
 
         order.setOrderLineItems(orderLineItems);
-
         orderRepository.save(order);
 
+        // 4. Clear the cart
+        // Note: This tells Cart MS to "release" the reservation, but since we already
+        // "confirmed" and deleted it above, the release will safely do nothing!
         cartClient.clearCart(authHeader);
 
+        // 5. Send RabbitMQ Notification
         OrderPlacedEvent event = new OrderPlacedEvent(order.getOrderNumber(), order.getCustomerEmail());
         rabbitTemplate.convertAndSend("orderExchange", "order.placed", event);
 
@@ -89,6 +92,28 @@ public class OrderService {
         log.info("Order {} placed successfully", order.getOrderNumber());
 
         return mapToOrderResponse(order);
+    }
+
+
+    private String extractEmailFromJwt() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
+            return null;
+        }
+
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+
+        String email = jwt.getClaimAsString("email");
+        if (email != null && !email.isEmpty()) {
+            return email;
+        }
+        
+        String username = jwt.getClaimAsString("preferred_username");
+        if (username != null && !username.isEmpty()) {
+            return username;
+        }
+        
+        return jwt.getSubject();
     }
 
     public OrderResponse fallback(OrderRequest orderRequest, String authHeader, Throwable throwable) {

@@ -1,6 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const CartItem = ({ id, name, price, quantity, image, onQuantityChange, onRemove }) => {
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const handleQuantityChange = async (newQuantity) => {
+        setIsUpdating(true);
+        try {
+            await onQuantityChange(id, newQuantity);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleRemove = async () => {
+        setIsUpdating(true);
+        try {
+            await onRemove(id);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     return (
         <div style={{
             backgroundColor: 'var(--color-card)',
@@ -11,7 +31,9 @@ const CartItem = ({ id, name, price, quantity, image, onQuantityChange, onRemove
             gap: '1.5rem',
             alignItems: 'center',
             marginBottom: '1rem',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            opacity: isUpdating ? 0.6 : 1,
+            pointerEvents: isUpdating ? 'none' : 'auto'
         }}>
             {/* Product Image */}
             <div style={{
@@ -46,7 +68,7 @@ const CartItem = ({ id, name, price, quantity, image, onQuantityChange, onRemove
                     fontSize: '0.9rem',
                     marginBottom: '0.5rem'
                 }}>
-                    ${price} each
+                    ${price.toFixed(2)} each
                 </p>
             </div>
 
@@ -60,15 +82,17 @@ const CartItem = ({ id, name, price, quantity, image, onQuantityChange, onRemove
                 padding: '0.25rem'
             }}>
                 <button
-                    onClick={() => onQuantityChange(id, quantity - 1)}
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={isUpdating}
                     style={{
                         backgroundColor: 'transparent',
                         border: 'none',
-                        color: 'var(--color-primary)',
-                        cursor: 'pointer',
+                        color: isUpdating ? 'var(--color-text-light)' : 'var(--color-primary)',
+                        cursor: isUpdating ? 'not-allowed' : 'pointer',
                         padding: '0.25rem 0.5rem',
                         fontSize: '1.2rem',
-                        fontWeight: '700'
+                        fontWeight: '700',
+                        opacity: isUpdating ? 0.5 : 1
                     }}
                 >
                     −
@@ -83,15 +107,17 @@ const CartItem = ({ id, name, price, quantity, image, onQuantityChange, onRemove
                     {quantity}
                 </span>
                 <button
-                    onClick={() => onQuantityChange(id, quantity + 1)}
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    disabled={isUpdating}
                     style={{
                         backgroundColor: 'transparent',
                         border: 'none',
-                        color: 'var(--color-primary)',
-                        cursor: 'pointer',
+                        color: isUpdating ? 'var(--color-text-light)' : 'var(--color-primary)',
+                        cursor: isUpdating ? 'not-allowed' : 'pointer',
                         padding: '0.25rem 0.5rem',
                         fontSize: '1.2rem',
-                        fontWeight: '700'
+                        fontWeight: '700',
+                        opacity: isUpdating ? 0.5 : 1
                     }}
                 >
                     +
@@ -122,29 +148,35 @@ const CartItem = ({ id, name, price, quantity, image, onQuantityChange, onRemove
 
             {/* Remove Button */}
             <button
-                onClick={() => onRemove(id)}
+                onClick={handleRemove}
+                disabled={isUpdating}
                 style={{
                     backgroundColor: 'transparent',
                     border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-light)',
+                    color: isUpdating ? 'var(--color-text-light)' : 'var(--color-text-light)',
                     borderRadius: '6px',
                     padding: '0.5rem 1rem',
-                    cursor: 'pointer',
+                    cursor: isUpdating ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
-                    fontWeight: '600'
+                    fontWeight: '600',
+                    opacity: isUpdating ? 0.5 : 1
                 }}
                 onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fee';
-                    e.currentTarget.style.color = '#c33';
-                    e.currentTarget.style.borderColor = '#fcc';
+                    if (!isUpdating) {
+                        e.currentTarget.style.backgroundColor = '#fee';
+                        e.currentTarget.style.color = '#c33';
+                        e.currentTarget.style.borderColor = '#fcc';
+                    }
                 }}
                 onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'var(--color-text-light)';
-                    e.currentTarget.style.borderColor = 'var(--color-border)';
+                    if (!isUpdating) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = 'var(--color-text-light)';
+                        e.currentTarget.style.borderColor = 'var(--color-border)';
+                    }
                 }}
             >
-                Remove
+                {isUpdating ? '...' : 'Remove'}
             </button>
         </div>
     );

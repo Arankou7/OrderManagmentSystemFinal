@@ -16,10 +16,6 @@ public class CartController {
 
     private final CartService cartService;
 
-    // The @AuthenticationPrincipal grabs the JWT token from Keycloak
-    // jwt.getSubject() extracts the unique User ID.
-    // This makes it impossible for users to access other people's carts!
-
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Cart getCart(@AuthenticationPrincipal Jwt jwt) {
@@ -28,20 +24,28 @@ public class CartController {
 
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.OK)
-    public Cart addToCart(@AuthenticationPrincipal Jwt jwt, @RequestBody CartItem cartItem) {
-        return cartService.addToCart(jwt.getSubject(), cartItem);
+    public Cart addToCart(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody CartItem cartItem,
+            @RequestHeader("Authorization") String token) {
+        return cartService.addToCart(jwt.getSubject(), cartItem, token);
     }
 
     @DeleteMapping("/clear")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void clearCart(@AuthenticationPrincipal Jwt jwt) {
-        cartService.clearCart(jwt.getSubject());
+    public void clearCart(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader("Authorization") String token) {
+        cartService.clearCart(jwt.getSubject(), token);
     }
 
     @DeleteMapping("/item/{skuCode}")
     @ResponseStatus(HttpStatus.OK)
-    public Cart removeItem(@AuthenticationPrincipal Jwt jwt, @PathVariable String skuCode) {
-        return cartService.removeItem(jwt.getSubject(), skuCode);
+    public Cart removeItem(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String skuCode,
+            @RequestHeader("Authorization") String token) {
+        return cartService.removeItem(jwt.getSubject(), skuCode, token);
     }
 
     @PutMapping("/item/{skuCode}")
@@ -49,8 +53,8 @@ public class CartController {
     public Cart updateItemQuantity(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String skuCode,
-            @RequestParam Integer quantity) {
-
-        return cartService.updateItemQuantity(jwt.getSubject(), skuCode, quantity);
+            @RequestParam Integer quantity,
+            @RequestHeader("Authorization") String token) {
+        return cartService.updateItemQuantity(jwt.getSubject(), skuCode, quantity, token);
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class ProductService {
 
     public ProductResponse createProduct(ProductRequest request) {
 
-        String skuCode = generateSku(request.name(), request.attributes());
+        String skuCode = generateSku();
 
         Product product = Product.builder()
                 .name(request.name())
@@ -102,18 +103,14 @@ public class ProductService {
         productRepository.delete(product);
     }
 
-    private String generateSku(String productName, List<ProductAttributeRequest> attributes) {
-        String namePart = productName.replace(" ", "-").toUpperCase();
-
-        String variantPart = "";
-
-        if (attributes != null && !attributes.isEmpty()) {
-            variantPart = "-" + attributes.getFirst().value().replace(" ", "-").toUpperCase();
-        }
-
-        String randomSuffix = "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
-
-        return namePart + variantPart + randomSuffix;
+    private String generateSku() {
+        Random random = new Random();
+        String newSku;
+        do {
+            int skuNumber = 100_000_000 + random.nextInt(900_000_000);
+            newSku = String.valueOf(skuNumber);
+        } while (productRepository.existsBySkuCode(newSku));
+        return newSku;
     }
 
     public ProductResponse getProductBySku(String skuCode) {

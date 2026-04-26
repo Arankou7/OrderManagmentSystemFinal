@@ -1,16 +1,38 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/card/PageHeader';
 import CartList from '../components/cart/CartList';
 import CartSummary from '../components/cart/CartSummary';
 import { CartContext } from '../context/CartContext';
 
 const Cart = () => {
-    const { cartItems, updateQuantity, removeFromCart } = useContext(CartContext);
+    const navigate = useNavigate();
+    const { cartItems, isLoading, loadCart, updateQuantity, removeFromCart } = useContext(CartContext);
+
+    /**
+     * Load cart from backend when component mounts
+     */
+    useEffect(() => {
+        loadCart();
+    }, [loadCart]);
 
     const handleCheckout = () => {
-        console.log('Proceeding to checkout with items:', cartItems);
-        // TODO: Implement checkout logic
+        navigate('/checkout');
     };
+
+    if (isLoading) {
+        return (
+            <>
+                <PageHeader 
+                    title="Shopping Cart 🛒"
+                    subtitle="Review your items before checkout"
+                />
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    <p style={{ color: 'var(--color-text-light)' }}>Loading your cart...</p>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>

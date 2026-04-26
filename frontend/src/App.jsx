@@ -2,11 +2,14 @@ import React from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import keycloak from "./Keycloak";
 import { CartProvider } from "./context/CartContext";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Layouts & Pages
 import RootLayout from "./main/RootLayout";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 
 // Placeholders
@@ -21,6 +24,7 @@ function App() {
       children: [
         { index: true, element: <Home /> },
         { path: "cart", element: <Cart /> },
+        { path: "checkout", element: <Checkout /> },
         { path: "product/:productId", element: <ProductDetail /> },
         { path: "reservation", element: <Reservation /> },
         { path: "profile", element: <Profile /> },
@@ -41,6 +45,18 @@ function App() {
   return (
     <CartProvider>
       <RouterProvider router={router} />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </CartProvider>
   );
 }

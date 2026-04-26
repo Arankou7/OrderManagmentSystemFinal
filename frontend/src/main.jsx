@@ -8,17 +8,24 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 keycloak.init({ 
-    onLoad: 'check-sso',  // 👈 Change 1: Check silently first
+    onLoad: 'check-sso',
     checkLoginIframe: false 
 }).then((authenticated) => {
     
     if (!authenticated) {
-        // 👈 Change 2: If not logged in, force redirect to Home ('/')
         console.log("Not authenticated, redirecting to login...");
         keycloak.login({ redirectUri: 'http://localhost:5173/' });
     } else {
-        // If logged in, render the app
         console.log("Authenticated!");
+        
+        // Store tokens in localStorage for API calls
+        if (keycloak.token) {
+            localStorage.setItem('access_token', keycloak.token);
+        }
+        if (keycloak.refreshToken) {
+            localStorage.setItem('refresh_token', keycloak.refreshToken);
+        }
+        
         root.render(
             <React.StrictMode>
                 <App />
