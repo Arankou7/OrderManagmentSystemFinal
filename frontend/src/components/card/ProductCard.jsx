@@ -1,9 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion'; // 👈 Import added
 
 const ProductCard = ({ product, onAddToCart }) => {
-    const { id, name, price, description, category, skuCode } = product || {};
+    const { id, name, price, description } = product || {};
     const navigate = useNavigate();
 
     const handleCardClick = () => {
@@ -16,16 +15,7 @@ const ProductCard = ({ product, onAddToCart }) => {
     };
 
     return (
-        <motion.div 
-            layout // 👈 Makes the card smoothly slide to its new spot when filtering
-            initial={{ opacity: 0, scale: 0.9 }} // 👈 Starting state (invisible & slightly small)
-            animate={{ opacity: 1, scale: 1 }}   // 👈 End state (fully visible)
-            exit={{ opacity: 0, scale: 0.9 }}    // 👈 Exit state when filtered out
-            transition={{ duration: 0.3 }}
-            whileHover={{ 
-                y: -4, 
-                boxShadow: '0 10px 25px rgba(15, 23, 42, 0.1)' 
-            }} // 👈 Replaces your onMouseEnter/Leave!
+        <div
             onClick={handleCardClick}
             style={{
                 backgroundColor: 'var(--color-card)',
@@ -39,7 +29,6 @@ const ProductCard = ({ product, onAddToCart }) => {
                 cursor: 'pointer'
             }}
         >
-            {/* Product Image */}
             <div style={{
                 backgroundColor: 'var(--color-bg)',
                 height: '200px',
@@ -55,21 +44,20 @@ const ProductCard = ({ product, onAddToCart }) => {
                     alignItems: 'center',
                     justifyContent: 'center'
                 }}>
-                    📦
+                    Box
                 </div>
             </div>
 
-            {/* Product Info */}
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <h5 style={{ 
-                    color: 'var(--color-primary)', 
-                    fontWeight: '700', 
+                <h5 style={{
+                    color: 'var(--color-primary)',
+                    fontWeight: '700',
                     marginBottom: '0.5rem',
                     fontSize: '1.1rem'
                 }}>
                     {name}
                 </h5>
-                
+
                 <p style={{
                     color: 'var(--color-text-light)',
                     fontSize: '0.9rem',
@@ -79,7 +67,7 @@ const ProductCard = ({ product, onAddToCart }) => {
                     {description}
                 </p>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                     <span style={{
                         fontSize: '1.5rem',
                         fontWeight: '700',
@@ -87,12 +75,7 @@ const ProductCard = ({ product, onAddToCart }) => {
                     }}>
                         ${price}
                     </span>
-                    <motion.button 
-                        whileHover={{ 
-                            backgroundColor: 'var(--color-hover)',
-                            y: -2 
-                        }} // 👈 Upgraded button hover
-                        whileTap={{ scale: 0.95 }} // Adds a click "press" effect!
+                    <button
                         onClick={handleAddToCartClick}
                         style={{
                             backgroundColor: 'var(--color-action)',
@@ -105,10 +88,10 @@ const ProductCard = ({ product, onAddToCart }) => {
                         }}
                     >
                         Add to Cart
-                    </motion.button>
+                    </button>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 };
 

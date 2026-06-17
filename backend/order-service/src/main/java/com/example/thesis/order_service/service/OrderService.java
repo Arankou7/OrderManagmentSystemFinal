@@ -5,6 +5,9 @@ import com.example.thesis.order_service.client.InventoryClient;
 import com.example.thesis.order_service.client.ProductClient;
 import com.example.thesis.order_service.dto.*;
 import com.example.thesis.order_service.event.OrderPlacedEvent;
+import com.example.thesis.order_service.exception.BusinessRuleException;
+import com.example.thesis.order_service.exception.OrderNotFoundException;
+import com.example.thesis.order_service.exception.ServiceUnavailableException;
 import com.example.thesis.order_service.model.Order;
 import com.example.thesis.order_service.model.OrderLineItems;
 import com.example.thesis.order_service.model.OrderStatus;
@@ -13,12 +16,15 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,18 +40,25 @@ public class OrderService {
     private final CartClient cartClient;
 
     @CircuitBreaker(name = "inventory", fallbackMethod = "fallback")
-    public OrderResponse placeOrder(OrderRequest orderRequest, String authHeader) {
+    public OrderResponse placeOrder(OrderRequest orderRequest, String authHeader, String idempotencyKey) {
+        String customerEmail = extractEmailFromJwt();
+        if (customerEmail == null || customerEmail.isEmpty()) {
+            throw new BusinessRuleException("Cannot extract customer email from token!");
+        }
+
+        String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKey);
+        if (normalizedIdempotencyKey != null) {
+            var existingOrder = orderRepository.findByCustomerEmailAndIdempotencyKey(customerEmail, normalizedIdempotencyKey);
+            if (existingOrder.isPresent()) {
+                log.info("Returning existing order for idempotency key {}", normalizedIdempotencyKey);
+                return mapToOrderResponse(existingOrder.get());
+            }
+        }
 
         CartResponse cart = cartClient.getCart(authHeader);
 
         if (cart == null || cart.items() == null || cart.items().isEmpty()) {
-            throw new RuntimeException("Cannot place order. Cart is empty!");
-        }
-
-        // Extract the customer email from the JWT token
-        String customerEmail = extractEmailFromJwt();
-        if (customerEmail == null || customerEmail.isEmpty()) {
-            throw new RuntimeException("Cannot extract customer email from token!");
+            throw new BusinessRuleException("Cannot place order. Cart is empty!");
         }
 
         // 1. Calculate the reservation ID that the Cart MS used
@@ -60,6 +73,7 @@ public class OrderService {
         Order order = Order.builder()
                 .orderNumber(UUID.randomUUID())
                 .customerEmail(customerEmail)
+                .idempotencyKey(normalizedIdempotencyKey)
                 .status(OrderStatus.PENDING) // Or COMPLETED, up to you!
                 .build();
 
@@ -116,18 +130,36 @@ public class OrderService {
         return jwt.getSubject();
     }
 
-    public OrderResponse fallback(OrderRequest orderRequest, String authHeader, Throwable throwable) {
+    public OrderResponse fallback(OrderRequest orderRequest, String authHeader, String idempotencyKey, Throwable throwable) {
         log.error("Circuit breaker triggered: {}", throwable.getMessage());
-        throw new RuntimeException("Oops! Something went wrong, please try again later.");
+        throw new ServiceUnavailableException("Order placement is temporarily unavailable. Please try again later.");
     }
 
     private OrderResponse mapToOrderResponse(Order order) {
         List<OrderLineItemsResponse> orderLineItemsResponses = order.getOrderLineItems()
                 .stream()
-                .map(item -> new OrderLineItemsResponse(item.getId(), item.getSkuCode(), item.getPrice(), item.getQuantity()))
+                .map(item -> new OrderLineItemsResponse(
+                        item.getId(),
+                        item.getSkuCode(),
+                        item.getProductName(),
+                        item.getPrice(),
+                        item.getQuantity(),
+                        calculateLineTotal(item)
+                ))
                 .toList();
 
-        return new OrderResponse(order.getOrderNumber(), order.getCustomerEmail(), order.getStatus(), orderLineItemsResponses);
+        BigDecimal subtotal = calculateSubtotal(order);
+
+        return new OrderResponse(
+                order.getOrderNumber(),
+                order.getCustomerEmail(),
+                order.getStatus(),
+                order.getCreatedAt(),
+                order.getUpdatedAt(),
+                subtotal,
+                subtotal,
+                orderLineItemsResponses
+        );
     }
 
     private OrderLineItems mapToEntity(OrderLineItemsRequest request) {
@@ -144,7 +176,7 @@ public class OrderService {
     }
 
     public List<OrderResponse> getOrders() {
-        List<Order> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         return orders.stream()
                 .map(this::mapToOrderResponse)
                 .toList();
@@ -152,13 +184,13 @@ public class OrderService {
 
     public OrderResponse getOrderByNumber(UUID orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found with number: " + orderNumber));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with number: " + orderNumber));
         return mapToOrderResponse(order);
     }
 
     public OrderResponse updateOrderStatus(UUID orderNumber, OrderStatus newStatus) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found with number: " + orderNumber));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with number: " + orderNumber));
 
         order.setStatus(newStatus);
         orderRepository.save(order);
@@ -166,9 +198,31 @@ public class OrderService {
     }
 
     public List<OrderResponse> getOrdersByCustomer(String email) {
-        List<Order> orders = orderRepository.findByCustomerEmail(email);
+        List<Order> orders = orderRepository.findByCustomerEmailOrderByCreatedAtDesc(email);
         return orders.stream()
                 .map(this::mapToOrderResponse)
                 .toList();
+    }
+
+    private BigDecimal calculateSubtotal(Order order) {
+        return order.getOrderLineItems()
+                .stream()
+                .map(this::calculateLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal calculateLineTotal(OrderLineItems item) {
+        return item.getPrice()
+                .multiply(BigDecimal.valueOf(item.getQuantity()))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String normalizeIdempotencyKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return null;
+        }
+
+        return idempotencyKey.trim();
     }
 }

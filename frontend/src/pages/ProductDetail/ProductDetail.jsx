@@ -17,19 +17,13 @@ const ProductDetail = () => {
         const loadProduct = async () => {
             setLoading(true);
             try {
-                const data = await fetchProducts.getAllProducts();
-                console.log('All products:', data);
-                console.log('Looking for productId:', productId);
-                
-                const foundProduct = data.find(p => p.id === productId || p.id.toString() === productId);
+                const foundProduct = await fetchProducts.getProductById(productId);
                 
                 if (!foundProduct) {
                     console.warn('Product not found for ID:', productId);
                     setError('Product not found');
                     return;
                 }
-                
-                console.log('Found product:', foundProduct);
                 setProduct(foundProduct);
                 setError(null);
             } catch (err) {

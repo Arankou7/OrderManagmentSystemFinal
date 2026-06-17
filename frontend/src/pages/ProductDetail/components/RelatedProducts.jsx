@@ -12,9 +12,9 @@ const RelatedProducts = ({ currentProductId, category }) => {
             setLoading(true);
             try {
                 const data = await fetchProducts.getAllProducts();
-                // Filter out current product and show related ones
                 const filtered = data
                     .filter(p => p.id !== currentProductId)
+                    .filter(p => !category || p.category === category)
                     .slice(0, 4);
                 setRelatedProducts(filtered);
             } catch (err) {
@@ -25,7 +25,7 @@ const RelatedProducts = ({ currentProductId, category }) => {
         };
 
         loadRelatedProducts();
-    }, [currentProductId]);
+    }, [currentProductId, category]);
 
     const handleProductClick = (productId) => {
         navigate(`/product/${productId}`);

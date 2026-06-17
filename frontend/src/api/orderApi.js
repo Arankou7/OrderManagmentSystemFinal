@@ -14,11 +14,13 @@ import api from './axiosConfig';
  * @returns {Promise<object>} The order confirmation with orderNumber and status
  * @throws {Error} If the request fails
  */
-export const createOrder = async () => {
+export const createOrder = async (idempotencyKey) => {
     try {
         // Simply POST to /order with no body - JWT token is in Authorization header
         // The backend extracts user info from the token and retrieves their cart
-        const response = await api.post('/order', {});
+        const response = await api.post('/order', {}, {
+            headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
+        });
         return response.data;
     } catch (error) {
         console.error('Error creating order:', error);

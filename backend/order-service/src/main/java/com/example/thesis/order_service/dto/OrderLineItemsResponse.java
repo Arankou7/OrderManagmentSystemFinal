@@ -4,5 +4,7 @@ import java.math.BigDecimal;
 
 public record OrderLineItemsResponse(Long id,
                                      String skuCode,
+                                     String productName,
                                      BigDecimal price,
-                                     Integer quantity) { }
+                                     Integer quantity,
+                                     BigDecimal lineTotal) { }

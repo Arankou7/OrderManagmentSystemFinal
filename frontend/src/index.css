@@ -4,23 +4,24 @@
 :root {
   /* Primary Brand */
   --color-primary: #0F172A;      /* Deep Navy */
-  
+
   /* Action / Buttons */
   --color-action: #F97316;       /* Vibrant Orange */
-  
+
   /* Background */
   --color-bg: #F1F5F9;           /* Slate Grey */
-  
+
   /* Cards / Panels */
   --color-card: #FFFFFF;         /* Pure White */
-  
+
   /* Text */
   --color-text: #334155;         /* Charcoal */
-  
+
   /* Additional utilities */
   --color-text-light: #64748B;   /* Light Grey for secondary text */
   --color-border: #E2E8F0;       /* Light border color */
   --color-hover: #EA580C;        /* Darker orange for hover states */
+  --color-success: #16A34A;      /* Success states */
 }
 
 /* ========================================
@@ -52,4 +53,3 @@ body {
   width: 100%;
   min-height: 100vh;
 }
-

@@ -10,5 +10,7 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order,Long> {
     Optional<Order> findByOrderNumber(UUID orderNumber);
 
-    List<Order> findByCustomerEmail(String customerEmail);
+    List<Order> findByCustomerEmailOrderByCreatedAtDesc(String customerEmail);
+
+    Optional<Order> findByCustomerEmailAndIdempotencyKey(String customerEmail, String idempotencyKey);
 }

@@ -1,17 +1,72 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/card/PageHeader';
-import { CartContext } from '../context/CartContext';
+import { CartContext } from '../context/cartContextValue';
 import { createOrder } from '../api/orderApi';
 import { toast } from '../utils/toast';
 
+const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
+
+const getCheckoutErrorMessage = (error) => {
+    if (error.response?.data?.message) {
+        return error.response.data.message;
+    }
+
+    if (typeof error.response?.data === 'string') {
+        return error.response.data;
+    }
+
+    if (error.response?.data?.error) {
+        return error.response.data.error;
+    }
+
+    if (error.response?.status === 400) {
+        return 'Some items in your cart need attention before you can place the order.';
+    }
+
+    if (error.response?.status === 500) {
+        return 'The order service could not complete the request. Please review your cart and try again.';
+    }
+
+    return 'Failed to place order. Please try again.';
+};
+
+const primaryButtonStyle = {
+    backgroundColor: 'var(--color-action)',
+    borderColor: 'var(--color-action)',
+    color: 'var(--color-card)',
+    fontWeight: 700,
+};
+
+const createIdempotencyKey = () => {
+    if (globalThis.crypto?.randomUUID) {
+        return globalThis.crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
 const Checkout = () => {
     const navigate = useNavigate();
-    const { cartItems, clearCart } = useContext(CartContext);
+    const { cartItems, clearCart, isLoading, loadCart } = useContext(CartContext);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [checkoutError, setCheckoutError] = useState('');
+
+    useEffect(() => {
+        loadCart();
+    }, [loadCart]);
+
+    const totals = useMemo(() => {
+        const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        return {
+            subtotal,
+            total: subtotal,
+            itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        };
+    }, [cartItems]);
 
     const handlePlaceOrder = async () => {
-        // Validate cart not empty BEFORE sending request
         if (cartItems.length === 0) {
             toast.error('Your cart is empty. Please add items before checkout.');
             return;
@@ -19,280 +74,228 @@ const Checkout = () => {
 
         try {
             setIsSubmitting(true);
-            
-            console.log('Placing order with cart items:', cartItems);
-            
-            // Create order - backend handles everything:
-            // - Fetches cart from auth token
-            // - Confirms stock reservation
-            // - Creates order with line items
-            // - Clears the cart
-            const orderResponse = await createOrder();
-            
-            // Order created successfully
-            toast.success(`Order ${orderResponse.orderNumber} placed successfully! 🎉`);
-            
-            // Clear local cart state
+            setCheckoutError('');
+
+            const idempotencyKey = createIdempotencyKey();
+            const orderResponse = await createOrder(idempotencyKey);
+            const orderedItems = cartItems.map((item) => ({ ...item }));
+
             clearCart();
-            
-            // Redirect to home after 2 seconds
-            setTimeout(() => {
-                navigate('/');
-            }, 2000);
-            
+            toast.success(`Order ${orderResponse.orderNumber} placed successfully.`);
+
+            navigate('/checkout/success', {
+                replace: true,
+                state: {
+                    order: orderResponse,
+                    items: orderedItems,
+                    totals,
+                    idempotencyKey,
+                },
+            });
         } catch (error) {
             console.error('Checkout error:', error);
-            console.error('Error response:', error.response);
-            console.error('Error data:', error.response?.data);
-            console.error('Error status:', error.response?.status);
-            
-            // Extract error message from backend response
-            let errorMessage = 'Failed to place order. Please try again.';
-            
-            // Try multiple ways to extract error message from backend
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (typeof error.response?.data === 'string') {
-                errorMessage = error.response.data;
-            } else if (error.response?.data?.error) {
-                errorMessage = error.response.data.error;
-            } else if (error.response?.status === 400) {
-                errorMessage = 'Invalid order request. Please check your cart.';
-            } else if (error.response?.status === 500) {
-                errorMessage = 'Server error. Your cart may be empty or invalid. Please try again.';
-            }
-            
+            const errorMessage = getCheckoutErrorMessage(error);
+            setCheckoutError(errorMessage);
             toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // If cart is empty, redirect to cart
-    if (cartItems.length === 0 && !isSubmitting) {
+    if (isLoading) {
         return (
             <>
-                <PageHeader 
+                <PageHeader
                     title="Checkout"
-                    subtitle="Review your order"
+                    subtitle="Loading your latest cart details"
                 />
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    <p style={{ color: 'var(--color-text-light)', marginBottom: '1rem' }}>Your cart is empty</p>
-                    <button
-                        onClick={() => navigate('/cart')}
-                        style={{
-                            backgroundColor: 'var(--color-action)',
-                            color: 'var(--color-card)',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '0.75rem 2rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                        }}
-                    >
-                        Back to Cart
-                    </button>
+                <div className="container pb-5">
+                    <div className="card border-0 shadow-sm mx-auto text-center p-5" style={{ maxWidth: '560px' }}>
+                        <div className="spinner-border mx-auto mb-3" style={{ color: 'var(--color-action)' }} role="status" />
+                        <p className="mb-0" style={{ color: 'var(--color-text-light)' }}>Loading your cart...</p>
+                    </div>
                 </div>
             </>
         );
     }
 
-    // Calculate totals
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.1;
-    const total = subtotal + tax;
-
-    return (
-        <>
-            <PageHeader 
-                title="Order Review"
-                subtitle="Ready to complete your purchase?"
-            />
-            <div style={{ 
-                display: 'flex',
-                justifyContent: 'center',
-                padding: '2rem'
-            }}>
-                {/* Order Summary Card */}
-                <div style={{
-                    backgroundColor: 'var(--color-card)',
-                    border: '2px solid var(--color-primary)',
-                    borderRadius: '8px',
-                    padding: '2rem',
-                    maxWidth: '600px',
-                    width: '100%'
-                }}>
-                    <h3 style={{
-                        color: 'var(--color-primary)',
-                        fontWeight: '700',
-                        marginBottom: '2rem',
-                        fontSize: '1.5rem'
-                    }}>
-                        Order Summary
-                    </h3>
-
-                    {/* Items List */}
-                    <div style={{ 
-                        marginBottom: '2rem', 
-                        maxHeight: '400px', 
-                        overflowY: 'auto',
-                        paddingBottom: '1rem',
-                        borderBottom: '2px solid var(--color-border)'
-                    }}>
-                        {cartItems.map(item => (
-                            <div key={item.id} style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '1.5rem',
-                                paddingBottom: '1rem',
-                                borderBottom: '1px solid var(--color-border)'
-                            }}>
-                                <div style={{ flex: 1 }}>
-                                    <p style={{
-                                        color: 'var(--color-text)',
-                                        fontWeight: '600',
-                                        marginBottom: '0.25rem',
-                                        fontSize: '1rem'
-                                    }}>
-                                        {item.name}
-                                    </p>
-                                    <p style={{
-                                        color: 'var(--color-text-light)',
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        Qty: {item.quantity} × ${item.price.toFixed(2)}
-                                    </p>
-                                </div>
-                                <p style={{
-                                    color: 'var(--color-action)',
-                                    fontWeight: '700',
-                                    fontSize: '1.1rem',
-                                    minWidth: '100px',
-                                    textAlign: 'right'
-                                }}>
-                                    ${(item.price * item.quantity).toFixed(2)}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Pricing Summary */}
-                    <div style={{ marginBottom: '2rem' }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '1rem'
-                        }}>
-                            <span style={{ color: 'var(--color-text)' }}>Subtotal</span>
-                            <span style={{ color: 'var(--color-text)', fontWeight: '600' }}>
-                                ${subtotal.toFixed(2)}
-                            </span>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '1rem',
-                            paddingBottom: '1rem',
-                            borderBottom: '2px solid var(--color-border)'
-                        }}>
-                            <span style={{ color: 'var(--color-text)' }}>Tax (10%)</span>
-                            <span style={{ color: 'var(--color-text)', fontWeight: '600' }}>
-                                ${tax.toFixed(2)}
-                            </span>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between'
-                        }}>
-                            <span style={{ 
-                                color: 'var(--color-primary)', 
-                                fontWeight: '700', 
-                                fontSize: '1.2rem' 
-                            }}>
-                                Total
-                            </span>
-                            <span style={{
-                                color: 'var(--color-action)',
-                                fontWeight: '700',
-                                fontSize: '1.3rem'
-                            }}>
-                                ${total.toFixed(2)}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        {/* Place Order Button */}
+    if (cartItems.length === 0 && !isSubmitting) {
+        return (
+            <>
+                <PageHeader
+                    title="Checkout"
+                    subtitle="Your cart is ready when you are"
+                />
+                <div className="container pb-5">
+                    <div className="card border-0 shadow-sm mx-auto text-center p-5" style={{ maxWidth: '560px' }}>
+                        <h2 className="h4 fw-bold" style={{ color: 'var(--color-primary)' }}>Your cart is empty</h2>
+                        <p style={{ color: 'var(--color-text-light)' }}>
+                            Add a few products first, then come back here to place your order.
+                        </p>
                         <button
-                            onClick={handlePlaceOrder}
-                            disabled={isSubmitting}
-                            style={{
-                                flex: 1,
-                                backgroundColor: isSubmitting ? 'var(--color-text-light)' : 'var(--color-action)',
-                                color: 'var(--color-card)',
-                                border: 'none',
-                                borderRadius: '6px',
-                                padding: '1rem',
-                                fontWeight: '700',
-                                fontSize: '1.1rem',
-                                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.3s ease',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                opacity: isSubmitting ? 0.7 : 1
-                            }}
-                            onMouseEnter={(e) => {
-                                if (!isSubmitting) {
-                                    e.currentTarget.style.backgroundColor = 'var(--color-hover)';
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 10px 20px rgba(249, 115, 22, 0.3)';
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!isSubmitting) {
-                                    e.currentTarget.style.backgroundColor = 'var(--color-action)';
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = 'none';
-                                }
-                            }}
-                        >
-                            {isSubmitting ? 'Processing...' : 'Place Order'}
-                        </button>
-
-                        {/* Back to Cart Button */}
-                        <button
+                            className="btn px-4 py-2 align-self-center"
+                            style={primaryButtonStyle}
                             onClick={() => navigate('/cart')}
-                            disabled={isSubmitting}
-                            style={{
-                                flex: 1,
-                                backgroundColor: 'transparent',
-                                color: 'var(--color-primary)',
-                                border: '2px solid var(--color-border)',
-                                borderRadius: '6px',
-                                padding: '1rem',
-                                fontWeight: '600',
-                                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.3s ease',
-                                opacity: isSubmitting ? 0.5 : 1
-                            }}
-                            onMouseEnter={(e) => {
-                                if (!isSubmitting) {
-                                    e.currentTarget.style.backgroundColor = 'var(--color-bg)';
-                                    e.currentTarget.style.borderColor = 'var(--color-primary)';
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!isSubmitting) {
-                                    e.currentTarget.style.backgroundColor = 'transparent';
-                                    e.currentTarget.style.borderColor = 'var(--color-border)';
-                                }
-                            }}
                         >
                             Back to Cart
                         </button>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <PageHeader
+                title="Order Review"
+                subtitle="Check your items and totals before placing the order"
+            />
+
+            <div className="container pb-5">
+                <div className="row g-3 mb-4" aria-label="Checkout progress">
+                    {['Cart', 'Review', 'Confirmation'].map((step) => {
+                        const isActive = step === 'Review';
+                        const isComplete = step === 'Cart';
+
+                        return (
+                            <div className="col-12 col-md-4" key={step}>
+                                <div
+                                    className={`card text-center h-100 ${isActive ? 'text-white' : ''}`}
+                                    style={{
+                                        backgroundColor: isActive ? 'var(--color-primary)' : 'var(--color-card)',
+                                        borderColor: isActive || isComplete ? 'var(--color-primary)' : 'var(--color-border)',
+                                        color: isActive ? 'var(--color-card)' : 'var(--color-text-light)',
+                                    }}
+                                >
+                                    <div className="card-body py-3 fw-bold">{step}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {checkoutError && (
+                    <div className="alert alert-danger d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3" role="alert">
+                        <div>
+                            <strong className="d-block">Order could not be placed.</strong>
+                            <span>{checkoutError}</span>
+                        </div>
+                        <button type="button" className="btn btn-danger fw-bold" onClick={() => navigate('/cart')}>
+                            Review cart
+                        </button>
+                    </div>
+                )}
+
+                <div className="row g-4 align-items-start">
+                    <div className="col-12 col-lg-8">
+                        <section className="card border-0 shadow-sm" aria-labelledby="checkout-items-title">
+                            <div className="card-body p-4">
+                                <div className="d-flex justify-content-between align-items-start gap-3 mb-4">
+                                    <div>
+                                        <p className="text-uppercase fw-bold small mb-1" style={{ color: 'var(--color-action)' }}>
+                                            Final review
+                                        </p>
+                                        <h2 id="checkout-items-title" className="h4 fw-bold mb-0" style={{ color: 'var(--color-primary)' }}>
+                                            Items in your order
+                                        </h2>
+                                    </div>
+                                    <span className="badge rounded-pill text-bg-light border px-3 py-2">
+                                        {totals.itemCount} item{totals.itemCount === 1 ? '' : 's'}
+                                    </span>
+                                </div>
+
+                                <div className="list-group list-group-flush">
+                                    {cartItems.map((item) => (
+                                        <article className="list-group-item px-0 py-3" key={item.id}>
+                                            <div className="row g-3 align-items-center">
+                                                <div className="col-auto">
+                                                    <div
+                                                        className="rounded d-flex align-items-center justify-content-center overflow-hidden fw-bold"
+                                                        style={{
+                                                            width: '74px',
+                                                            height: '74px',
+                                                            backgroundColor: 'var(--color-bg)',
+                                                            color: 'var(--color-primary)',
+                                                        }}
+                                                    >
+                                                        {item.image ? (
+                                                            <img src={item.image} alt={item.name} className="w-100 h-100 object-fit-cover" />
+                                                        ) : (
+                                                            <span>{item.name?.charAt(0)?.toUpperCase() || 'P'}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="col">
+                                                    <h3 className="h6 fw-bold mb-1" style={{ color: 'var(--color-primary)' }}>{item.name}</h3>
+                                                    <p className="small mb-0" style={{ color: 'var(--color-text-light)' }}>
+                                                        SKU: {item.skuCode || item.id}
+                                                    </p>
+                                                    <p className="small mb-0" style={{ color: 'var(--color-text-light)' }}>
+                                                        Qty {item.quantity} x {formatCurrency(item.price)}
+                                                    </p>
+                                                </div>
+
+                                                <div className="col-12 col-sm-auto text-sm-end fw-bold" style={{ color: 'var(--color-primary)' }}>
+                                                    {formatCurrency(item.price * item.quantity)}
+                                                </div>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div className="col-12 col-lg-4">
+                        <aside className="card border-0 shadow-sm sticky-lg-top" style={{ top: '2rem' }} aria-label="Order summary">
+                            <div className="card-body p-4">
+                                <p className="text-uppercase fw-bold small mb-1" style={{ color: 'var(--color-action)' }}>
+                                    Summary
+                                </p>
+                                <h2 className="h4 fw-bold mb-4" style={{ color: 'var(--color-primary)' }}>Order total</h2>
+
+                                <div className="d-flex justify-content-between border-bottom pb-3 mb-3">
+                                    <span style={{ color: 'var(--color-text-light)' }}>Subtotal</span>
+                                    <strong style={{ color: 'var(--color-primary)' }}>{formatCurrency(totals.subtotal)}</strong>
+                                </div>
+                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                    <span className="h5 fw-bold mb-0" style={{ color: 'var(--color-action)' }}>Total</span>
+                                    <strong className="h4 mb-0" style={{ color: 'var(--color-action)' }}>{formatCurrency(totals.total)}</strong>
+                                </div>
+
+                                <div className="alert alert-warning small mb-4">
+                                    Stock is confirmed when you place the order. If something changed, we will ask you to review the cart.
+                                </div>
+
+                                <div className="d-grid gap-2">
+                                    <button
+                                        className="btn btn-lg"
+                                        style={primaryButtonStyle}
+                                        onClick={handlePlaceOrder}
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
+                                                Placing order...
+                                            </>
+                                        ) : (
+                                            'Place Order'
+                                        )}
+                                    </button>
+
+                                    <button
+                                        className="btn btn-outline-secondary btn-lg fw-bold"
+                                        onClick={() => navigate('/cart')}
+                                        disabled={isSubmitting}
+                                    >
+                                        Edit Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </aside>
                     </div>
                 </div>
             </div>

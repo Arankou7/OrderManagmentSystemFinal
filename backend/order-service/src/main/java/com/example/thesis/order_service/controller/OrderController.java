@@ -22,8 +22,10 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderResponse placeOrder(@RequestBody OrderRequest request, @RequestHeader("Authorization") String token) {
-        return orderService.placeOrder(request, token);
+    public OrderResponse placeOrder(@RequestBody OrderRequest request,
+                                    @RequestHeader("Authorization") String token,
+                                    @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        return orderService.placeOrder(request, token, idempotencyKey);
     }
 
     @GetMapping

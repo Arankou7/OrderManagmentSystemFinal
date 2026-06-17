@@ -1,18 +1,31 @@
-import React, { createContext, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { getCart, addToCart as apiAddToCart, updateCartItem, removeCartItem } from '../api/cartApi';
 import { toast } from '../utils/toast';
+import { CartContext } from './cartContextValue';
 
-export const CartContext = createContext();
+const mapCartItems = (cartData) => (cartData.items || cartData || []).map(item => ({
+    id: item.skuCode,
+    skuCode: item.skuCode,
+    name: item.productName,
+    price: item.price,
+    quantity: item.quantity,
+    image: item.image || null
+}));
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const loadCartRequestRef = useRef(null);
 
     /**
      * Load the cart from the backend
      */
     const loadCart = useCallback(async () => {
+        if (loadCartRequestRef.current) {
+            return loadCartRequestRef.current;
+        }
+
         try {
             setIsLoading(true);
             setError(null);
@@ -25,23 +38,15 @@ export const CartProvider = ({ children }) => {
                 return;
             }
             
-            const cartData = await getCart();
-            // Map backend response to UI format
-            // Backend returns array of cart items with: skuCode, quantity, price, productName, etc.
-            const formattedItems = (cartData.items || cartData || []).map(item => ({
-                id: item.skuCode, // Use skuCode as the unique identifier
-                skuCode: item.skuCode,
-                name: item.productName,
-                price: item.price,
-                quantity: item.quantity,
-                image: item.image || null
-            }));
-            setCartItems(formattedItems);
+            loadCartRequestRef.current = getCart();
+            const cartData = await loadCartRequestRef.current;
+            setCartItems(mapCartItems(cartData));
         } catch (err) {
             console.error('Failed to load cart:', err);
             setError(err.message);
             toast.error('Failed to load cart. Please refresh the page.');
         } finally {
+            loadCartRequestRef.current = null;
             setIsLoading(false);
         }
     }, []);
@@ -49,23 +54,21 @@ export const CartProvider = ({ children }) => {
     /**
      * Add a product to cart via backend API
      */
-    const addToCart = useCallback(async (product) => {
+    const addToCart = useCallback(async (product, quantity = 1) => {
         try {
             setError(null);
             
             // Prepare the payload according to backend requirements
             const payload = {
                 skuCode: product.skuCode || product.id,
-                quantity: 1,
+                quantity,
                 price: product.price,
                 productName: product.name || product.productName
             };
 
             // Call backend API
-            await apiAddToCart(payload);
-            
-            // Reload cart from backend to get the updated state
-            await loadCart();
+            const updatedCart = await apiAddToCart(payload);
+            setCartItems(mapCartItems(updatedCart));
             toast.success(`${product.name || product.productName} added to cart!`);
         } catch (err) {
             console.error('Failed to add item to cart:', err);
@@ -80,7 +83,7 @@ export const CartProvider = ({ children }) => {
             
             setError(err.message);
         }
-    }, [loadCart]);
+    }, []);
 
     /**
      * Remove an item from cart

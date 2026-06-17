@@ -1,47 +1,57 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { CartContext } from '../../../context/CartContext';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
+import { CartContext } from '../../../context/cartContextValue';
 import { fetchInventory } from '../../../api/inventoryApi';
 
 const ProductInfo = ({ product }) => {
     const { addToCart } = useContext(CartContext);
     const [quantity, setQuantity] = useState(1);
     const [addedToCart, setAddedToCart] = useState(false);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [inventoryCount, setInventoryCount] = useState(null);
     const [loadingInventory, setLoadingInventory] = useState(false);
 
-    const handleAddToCart = () => {
-        for (let i = 0; i < quantity; i++) {
-            addToCart(product);
+    const handleAddToCart = async () => {
+        if (!product || isAddingToCart) {
+            return;
         }
-        setAddedToCart(true);
-        setTimeout(() => setAddedToCart(false), 2000);
+
+        setIsAddingToCart(true);
+        try {
+            await addToCart(product, quantity);
+            setAddedToCart(true);
+            setTimeout(() => setAddedToCart(false), 2000);
+        } finally {
+            setIsAddingToCart(false);
+        }
     };
 
     const handleQuantityChange = (value) => {
-        const newQty = parseInt(value);
+        const newQty = parseInt(value, 10);
         if (newQty > 0) {
             setQuantity(newQty);
         }
     };
 
-    const handleInventoryLeft = async () => {
-        if (product && product.skuCode) {
-            setLoadingInventory(true);
-            try {
-                const data = await fetchInventory.getInventory(product.skuCode);
-                setInventoryCount(data.availableQuantity);
-            } catch (error) {
-                console.error('Error fetching inventory:', error);
-                setInventoryCount(0);
-            } finally {
-                setLoadingInventory(false);
-            }
+    const handleInventoryLeft = useCallback(async () => {
+        if (!product?.skuCode) {
+            return;
         }
-    };
+
+        setLoadingInventory(true);
+        try {
+            const data = await fetchInventory.getInventory(product.skuCode);
+            setInventoryCount(data.availableQuantity);
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+            setInventoryCount(0);
+        } finally {
+            setLoadingInventory(false);
+        }
+    }, [product?.skuCode]);
 
     useEffect(() => {
         handleInventoryLeft();
-    }, [product?.skuCode]);
+    }, [handleInventoryLeft]);
 
     return (
         <div style={{
@@ -59,7 +69,7 @@ const ProductInfo = ({ product }) => {
                     }
                 }
             `}</style>
-            {/* Title */}
+
             <div>
                 <h1 style={{
                     fontSize: '2rem',
@@ -77,7 +87,6 @@ const ProductInfo = ({ product }) => {
                 </p>
             </div>
 
-            {/* Price Section */}
             <div style={{
                 backgroundColor: 'var(--color-bg)',
                 padding: '1.5rem',
@@ -110,27 +119,22 @@ const ProductInfo = ({ product }) => {
                     animation: inventoryCount < 10 ? 'pulse 1.5s infinite' : 'none'
                 }}>
                     {loadingInventory ? (
-                        '⏳ Checking stock...'
+                        'Checking stock...'
                     ) : inventoryCount === null ? (
-                        '✓ In Stock'
+                        'In stock'
                     ) : inventoryCount > 0 ? (
-                        <>
-                            {inventoryCount < 10 ? (
-                                <>
-                                    ⚠️ HURRY! Only <strong>{inventoryCount} left</strong> in stock - Get yours before it's gone!
-                                </>
-                            ) : (
-                                <>
-                                    ✓ {inventoryCount} in stock
-                                </>
-                            )}
-                        </>
+                        inventoryCount < 10 ? (
+                            <>
+                                Hurry! Only <strong>{inventoryCount} left</strong> in stock.
+                            </>
+                        ) : (
+                            <>{inventoryCount} in stock</>
+                        )
                     ) : (
-                        '❌ Out of Stock'
+                        'Out of stock'
                     )}
                 </div>
 
-                {/* Quantity Selector */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -159,9 +163,9 @@ const ProductInfo = ({ product }) => {
                 </div>
             </div>
 
-            {/* Add to Cart Button */}
             <button
                 onClick={handleAddToCart}
+                disabled={isAddingToCart}
                 style={{
                     backgroundColor: addedToCart ? 'var(--color-success)' : 'var(--color-action)',
                     color: 'white',
@@ -170,11 +174,12 @@ const ProductInfo = ({ product }) => {
                     border: 'none',
                     fontSize: '1.1rem',
                     fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    cursor: isAddingToCart ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: isAddingToCart ? 0.75 : 1
                 }}
                 onMouseEnter={(e) => {
-                    if (!addedToCart) {
+                    if (!addedToCart && !isAddingToCart) {
                         e.currentTarget.style.transform = 'translateY(-2px)';
                         e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.2)';
                     }
@@ -184,10 +189,9 @@ const ProductInfo = ({ product }) => {
                     e.currentTarget.style.boxShadow = 'none';
                 }}
             >
-                {addedToCart ? '✓ Added to Cart' : '🛒 Add to Cart'}
+                {isAddingToCart ? 'Adding...' : addedToCart ? 'Added to Cart' : 'Add to Cart'}
             </button>
 
-            {/* Product Description */}
             <div>
                 <h3 style={{
                     fontSize: '1.1rem',

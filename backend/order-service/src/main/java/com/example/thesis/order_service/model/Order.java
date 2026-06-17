@@ -9,7 +9,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "orders")
+@Table(
+        name = "orders",
+        indexes = {
+                @Index(name = "idx_orders_customer_email", columnList = "customer_email"),
+                @Index(name = "idx_orders_created_at", columnList = "created_at"),
+                @Index(name = "idx_orders_idempotency_key", columnList = "idempotency_key")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,14 +31,20 @@ public class Order {
     @Column(name = "order_number", nullable = false, unique = true, updatable = false)
     private UUID orderNumber;
 
-    @Column(nullable = false)
+    @Column(name = "customer_email", nullable = false)
     private String customerEmail;
+
+    @Column(name = "idempotency_key", unique = true)
+    private String idempotencyKey;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @OneToMany(

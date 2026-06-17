@@ -3,15 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/card/PageHeader';
 import CartList from '../components/cart/CartList';
 import CartSummary from '../components/cart/CartSummary';
-import { CartContext } from '../context/CartContext';
+import { CartContext } from '../context/cartContextValue';
 
 const Cart = () => {
     const navigate = useNavigate();
     const { cartItems, isLoading, loadCart, updateQuantity, removeFromCart } = useContext(CartContext);
 
-    /**
-     * Load cart from backend when component mounts
-     */
     useEffect(() => {
         loadCart();
     }, [loadCart]);
@@ -23,12 +20,15 @@ const Cart = () => {
     if (isLoading) {
         return (
             <>
-                <PageHeader 
-                    title="Shopping Cart 🛒"
+                <PageHeader
+                    title="Shopping Cart"
                     subtitle="Review your items before checkout"
                 />
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    <p style={{ color: 'var(--color-text-light)' }}>Loading your cart...</p>
+                <div className="container pb-5 text-center">
+                    <div className="card border-0 shadow-sm mx-auto p-5" style={{ maxWidth: '560px' }}>
+                        <div className="spinner-border mx-auto mb-3" style={{ color: 'var(--color-action)' }} role="status" />
+                        <p className="mb-0" style={{ color: 'var(--color-text-light)' }}>Loading your cart...</p>
+                    </div>
                 </div>
             </>
         );
@@ -36,20 +36,26 @@ const Cart = () => {
 
     return (
         <>
-            <PageHeader 
-                title="Shopping Cart 🛒"
+            <PageHeader
+                title="Shopping Cart"
                 subtitle="Review your items before checkout"
             />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem', padding: '2rem' }}>
-                <CartList
-                    items={cartItems}
-                    onQuantityChange={updateQuantity}
-                    onRemove={removeFromCart}
-                />
-                <CartSummary
-                    items={cartItems}
-                    onCheckout={handleCheckout}
-                />
+            <div className="container pb-5">
+                <div className="row g-4 align-items-start">
+                    <div className="col-12 col-lg-8">
+                        <CartList
+                            items={cartItems}
+                            onQuantityChange={updateQuantity}
+                            onRemove={removeFromCart}
+                        />
+                    </div>
+                    <div className="col-12 col-lg-4">
+                        <CartSummary
+                            items={cartItems}
+                            onCheckout={handleCheckout}
+                        />
+                    </div>
+                </div>
             </div>
         </>
     );

@@ -1,6 +1,5 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
-import keycloak from "./Keycloak";
 import { CartProvider } from "./context/CartContext";
 import { ToastContainer } from 'react-toastify';
 import Orders from "./pages/Orders";
@@ -11,9 +10,10 @@ import RootLayout from "./main/RootLayout";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 
-const Profile = () => <h2>User Profile 👤</h2>;
+const Profile = () => <h2>User Profile</h2>;
 
 function App() {
   const router = createBrowserRouter([
@@ -24,6 +24,7 @@ function App() {
         { index: true, element: <Home /> },
         { path: "cart", element: <Cart /> },
         { path: "checkout", element: <Checkout /> },
+        { path: "checkout/success", element: <CheckoutSuccess /> },
         { path: "product/:productId", element: <ProductDetail /> },
         { path: "orders", element: <Orders /> },
         { path: "profile", element: <Profile /> },

@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import keycloak from '../Keycloak';
-import { useContext } from 'react';
-import { CartContext } from '../context/CartContext';
+import { CartContext } from '../context/cartContextValue';
 
 const RootLayout = () => {
     const navigate = useNavigate();
@@ -15,20 +14,17 @@ const RootLayout = () => {
 
     return (
         <div style={{ backgroundColor: 'var(--color-bg)', minHeight: '100vh' }}>
-            {/* Navigation Bar */}
             <nav className="navbar mb-4" style={{ backgroundColor: 'var(--color-primary)' }}>
-                <div style={{ display: 'flex', width: '100%', alignItems: 'center', padding: '1rem 2rem', justifyContent: 'space-between' }}>
-                    {/* Left: Logo */}
-                    <Link className="navbar-brand" to="/" style={{ color: 'var(--color-card)', fontSize: '1.5rem', fontWeight: '700', margin: 0, flex: 1 }}>
-                        📦 Order System
+                <div style={{ display: 'flex', width: '100%', alignItems: 'center', padding: '1rem 2rem', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <Link className="navbar-brand" to="/" style={{ color: 'var(--color-card)', fontSize: '1.5rem', fontWeight: '700', margin: 0, flex: '1 1 180px' }}>
+                        Order System
                     </Link>
 
-                    {/* Center: Navigation Links */}
-                    <div style={{ display: 'flex', gap: '1rem', flex: 1, justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '1rem', flex: '1 1 260px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Link className="btn btn-outline-light" to="/">Home</Link>
                         <Link className="btn btn-outline-light" to="/orders">Orders</Link>
                         <Link className="btn btn-outline-light" to="/cart" style={{ position: 'relative' }}>
-                            🛒 Cart
+                            Cart
                             <span style={{
                                 position: 'absolute',
                                 top: '-8px',
@@ -47,8 +43,7 @@ const RootLayout = () => {
                         </Link>
                     </div>
 
-                    {/* Right: Logout Button */}
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ flex: '1 1 180px', display: 'flex', justifyContent: 'flex-end' }}>
                         <button onClick={handleLogout} className="btn" style={{ backgroundColor: 'var(--color-action)', color: 'var(--color-card)', border: 'none', fontWeight: '600' }}>
                             Logout
                         </button>
