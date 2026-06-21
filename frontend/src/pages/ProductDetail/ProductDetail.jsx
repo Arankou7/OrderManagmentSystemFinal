@@ -108,7 +108,7 @@ const ProductDetail = () => {
                         fontWeight: '600'
                     }}
                 >
-                    ← Back
+                    Back
                 </button>
                 <span style={{ color: 'var(--color-text-light)' }}>
                     / {product.category} / {product.name}

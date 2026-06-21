@@ -27,6 +27,7 @@ services:
       - "8180:8080"
     volumes:
       - keycloak_data_new:/opt/keycloak/data/h2
+      - ./my-theme:/opt/keycloak/themes/my-theme:ro
 
   redis:
     image: redis:7-alpine

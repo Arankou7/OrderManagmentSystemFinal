@@ -21,31 +21,63 @@ const Orders = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchOrders = async () => {
+        let isMounted = true;
+
+        const fetchOrders = async (showLoading = false) => {
             try {
+                if (showLoading) {
+                    setLoading(true);
+                }
+
                 const data = await getMyOrders();
-                setOrders(data);
+                if (isMounted) {
+                    setOrders(data);
+                    setError(null);
+                }
             } catch {
-                setError('Could not load your orders. Please try again later.');
+                if (isMounted) {
+                    setError('Could not load your orders. Please try again later.');
+                }
             } finally {
-                setLoading(false);
+                if (isMounted && showLoading) {
+                    setLoading(false);
+                }
             }
         };
 
-        fetchOrders();
+        fetchOrders(true);
+        const intervalId = window.setInterval(() => fetchOrders(false), 10000);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(intervalId);
+        };
     }, []);
 
     const getStatusStyle = (status) => {
         switch (status?.toUpperCase()) {
             case 'COMPLETED':
+            case 'DELIVERED':
+            case 'CONFIRMED':
                 return { bg: '#e6f4ea', text: '#1e8e3e', border: '#1e8e3e' };
+            case 'SHIPPED':
+                return { bg: '#e8f0fe', text: '#1967d2', border: '#1967d2' };
             case 'PENDING':
                 return { bg: '#fff7ed', text: 'var(--color-action)', border: 'var(--color-action)' };
             case 'CANCELLED':
+            case 'FAILED':
                 return { bg: '#fce8e6', text: '#d93025', border: '#d93025' };
             default:
                 return { bg: 'var(--color-bg)', text: 'var(--color-text-light)', border: 'var(--color-border)' };
         }
+    };
+
+    const getStatusLabel = (status) => {
+        if (status?.toUpperCase() === 'DELIVERED') {
+            return 'FINISHED';
+        }
+
+        return status;
     };
 
     if (loading) {
@@ -106,7 +138,7 @@ const Orders = () => {
                                                 fontWeight: '700',
                                                 letterSpacing: '0.5px'
                                             }}>
-                                                {order.status}
+                                                {getStatusLabel(order.status)}
                                             </span>
                                         </div>
                                     </div>

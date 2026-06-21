@@ -2,8 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product, onAddToCart }) => {
-    const { id, name, price, description } = product || {};
+    const { id, name, price, description, inventory, inventoryLoaded } = product || {};
     const navigate = useNavigate();
+    const availableQuantity = inventory?.availableQuantity;
+    const isOutOfStock = inventoryLoaded && availableQuantity <= 0;
+    const hasStockData = inventoryLoaded && inventory;
 
     const handleCardClick = () => {
         navigate(`/product/${id}`);
@@ -11,7 +14,9 @@ const ProductCard = ({ product, onAddToCart }) => {
 
     const handleAddToCartClick = (e) => {
         e.stopPropagation();
-        onAddToCart && onAddToCart(id);
+        if (!isOutOfStock) {
+            onAddToCart && onAddToCart(id);
+        }
     };
 
     return (
@@ -61,11 +66,26 @@ const ProductCard = ({ product, onAddToCart }) => {
                 <p style={{
                     color: 'var(--color-text-light)',
                     fontSize: '0.9rem',
-                    marginBottom: '1rem',
+                    marginBottom: '0.75rem',
                     flex: 1
                 }}>
                     {description}
                 </p>
+
+                <div style={{
+                    color: isOutOfStock ? '#d93025' : 'var(--color-success)',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    marginBottom: '1rem'
+                }}>
+                    {!inventoryLoaded
+                        ? 'Checking stock...'
+                        : hasStockData
+                            ? availableQuantity > 0
+                                ? `${availableQuantity} available`
+                                : 'Out of stock'
+                            : 'Stock unavailable'}
+                </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                     <span style={{
@@ -77,17 +97,18 @@ const ProductCard = ({ product, onAddToCart }) => {
                     </span>
                     <button
                         onClick={handleAddToCartClick}
+                        disabled={isOutOfStock}
                         style={{
-                            backgroundColor: 'var(--color-action)',
+                            backgroundColor: isOutOfStock ? 'var(--color-text-light)' : 'var(--color-action)',
                             color: 'var(--color-card)',
                             border: 'none',
                             borderRadius: '6px',
                             padding: '0.5rem 1rem',
                             fontWeight: '600',
-                            cursor: 'pointer'
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer'
                         }}
                     >
-                        Add to Cart
+                        {isOutOfStock ? 'Unavailable' : 'Add to Cart'}
                     </button>
                 </div>
             </div>

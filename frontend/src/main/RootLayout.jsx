@@ -1,11 +1,15 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import keycloak from '../Keycloak';
 import { CartContext } from '../context/cartContextValue';
 
 const RootLayout = () => {
     const navigate = useNavigate();
-    const { getTotalItems } = useContext(CartContext);
+    const { getTotalItems, loadCart } = useContext(CartContext);
+
+    useEffect(() => {
+        loadCart();
+    }, [loadCart]);
 
     const handleLogout = () => {
         keycloak.logout();

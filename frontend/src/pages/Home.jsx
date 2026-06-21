@@ -3,11 +3,13 @@ import PageHeader from '../components/card/PageHeader';
 import ProductGrid from '../components/card/ProductGrid';
 import { CartContext } from '../context/cartContextValue';
 import { fetchProducts } from '../api/productApi';
+import { fetchInventory } from '../api/inventoryApi';
 
 const Home = () => {
     const { addToCart } = useContext(CartContext);
 
     const [products, setProducts] = useState([]);
+    const [inventoryBySku, setInventoryBySku] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -24,6 +26,25 @@ const Home = () => {
                 const data = await fetchProducts.getAllProducts();
                 if (isMounted) {
                     setProducts(data);
+                    setLoading(false);
+                }
+
+                const inventoryEntries = await Promise.all(
+                    data
+                        .filter(product => product.skuCode)
+                        .map(async (product) => {
+                            try {
+                                const inventory = await fetchInventory.getInventory(product.skuCode);
+                                return [product.skuCode, inventory];
+                            } catch (err) {
+                                console.warn(`Could not load inventory for SKU ${product.skuCode}`, err);
+                                return [product.skuCode, null];
+                            }
+                        })
+                );
+
+                if (isMounted) {
+                    setInventoryBySku(Object.fromEntries(inventoryEntries));
                 }
             } catch (err) {
                 if (isMounted) {
@@ -50,13 +71,27 @@ const Home = () => {
         }
     };
 
+    const productsWithInventory = useMemo(() => {
+        return products.map(product => {
+            const inventoryLoaded = product.skuCode
+                ? Object.prototype.hasOwnProperty.call(inventoryBySku, product.skuCode)
+                : false;
+
+            return {
+                ...product,
+                inventory: product.skuCode ? inventoryBySku[product.skuCode] : null,
+                inventoryLoaded
+            };
+        });
+    }, [products, inventoryBySku]);
+
     const categories = useMemo(
-        () => ['All', ...new Set(products.map(p => p.category).filter(Boolean))],
-        [products]
+        () => ['All', ...new Set(productsWithInventory.map(p => p.category).filter(Boolean))],
+        [productsWithInventory]
     );
 
     const filteredAndSortedProducts = useMemo(() => {
-        return [...products]
+        return [...productsWithInventory]
             .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .filter(p => selectedCategory === 'All' || p.category === selectedCategory)
             .sort((a, b) => {
@@ -64,7 +99,7 @@ const Home = () => {
                 if (sortOrder === 'price-high') return b.price - a.price;
                 return 0;
             });
-    }, [products, searchTerm, selectedCategory, sortOrder]);
+    }, [productsWithInventory, searchTerm, selectedCategory, sortOrder]);
 
     return (
         <>

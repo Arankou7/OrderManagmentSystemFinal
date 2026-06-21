@@ -2,14 +2,7 @@ import React, { useState } from 'react';
 
 const ProductImages = ({ productName }) => {
     const [selectedImage, setSelectedImage] = useState(0);
-    
-    // Placeholder images - in a real app, these would come from product data
-    const images = [
-        '📦',
-        '📦',
-        '📦',
-        '📦'
-    ];
+    const views = ['Main', 'Side', 'Detail', 'Scale'];
 
     return (
         <div style={{
@@ -17,7 +10,6 @@ const ProductImages = ({ productName }) => {
             flexDirection: 'column',
             gap: '1rem'
         }}>
-            {/* Main Image Display */}
             <div style={{
                 backgroundColor: 'var(--color-bg)',
                 borderRadius: '8px',
@@ -25,11 +17,26 @@ const ProductImages = ({ productName }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '8rem',
                 border: '1px solid var(--color-border)',
                 position: 'relative'
             }}>
-                {images[selectedImage]}
+                <div style={{
+                    width: '72%',
+                    aspectRatio: '1 / 1',
+                    borderRadius: '8px',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'var(--color-card)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    padding: '2rem',
+                    color: 'var(--color-primary)',
+                    fontSize: '2rem',
+                    fontWeight: '700'
+                }}>
+                    {productName || 'Product'}
+                </div>
                 <div style={{
                     position: 'absolute',
                     top: '1rem',
@@ -41,19 +48,18 @@ const ProductImages = ({ productName }) => {
                     fontSize: '0.9rem',
                     fontWeight: '600'
                 }}>
-                    1/{images.length}
+                    {selectedImage + 1}/{views.length}
                 </div>
             </div>
 
-            {/* Thumbnail Images */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gap: '0.5rem'
             }}>
-                {images.map((image, index) => (
+                {views.map((view, index) => (
                     <div
-                        key={index}
+                        key={view}
                         onClick={() => setSelectedImage(index)}
                         style={{
                             backgroundColor: 'var(--color-bg)',
@@ -62,9 +68,11 @@ const ProductImages = ({ productName }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '2rem',
-                            border: selectedImage === index 
-                                ? '3px solid var(--color-action)' 
+                            color: 'var(--color-primary)',
+                            fontSize: '0.9rem',
+                            fontWeight: '700',
+                            border: selectedImage === index
+                                ? '3px solid var(--color-action)'
                                 : '1px solid var(--color-border)',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease'
@@ -80,7 +88,7 @@ const ProductImages = ({ productName }) => {
                             }
                         }}
                     >
-                        {image}
+                        {view}
                     </div>
                 ))}
             </div>

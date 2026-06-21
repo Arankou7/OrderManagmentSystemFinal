@@ -9,9 +9,11 @@ const ProductInfo = ({ product }) => {
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [inventoryCount, setInventoryCount] = useState(null);
     const [loadingInventory, setLoadingInventory] = useState(false);
+    const isOutOfStock = inventoryCount !== null && inventoryCount <= 0;
+    const canAddToCart = !isAddingToCart && !loadingInventory && !isOutOfStock && quantity <= (inventoryCount ?? quantity);
 
     const handleAddToCart = async () => {
-        if (!product || isAddingToCart) {
+        if (!product || !canAddToCart) {
             return;
         }
 
@@ -28,7 +30,7 @@ const ProductInfo = ({ product }) => {
     const handleQuantityChange = (value) => {
         const newQty = parseInt(value, 10);
         if (newQty > 0) {
-            setQuantity(newQty);
+            setQuantity(inventoryCount === null ? newQty : Math.min(newQty, inventoryCount));
         }
     };
 
@@ -52,6 +54,12 @@ const ProductInfo = ({ product }) => {
     useEffect(() => {
         handleInventoryLeft();
     }, [handleInventoryLeft]);
+
+    useEffect(() => {
+        if (inventoryCount !== null && quantity > inventoryCount) {
+            setQuantity(Math.max(inventoryCount, 1));
+        }
+    }, [inventoryCount, quantity]);
 
     return (
         <div style={{
@@ -146,9 +154,10 @@ const ProductInfo = ({ product }) => {
                     <input
                         type="number"
                         min="1"
-                        max="100"
+                        max={inventoryCount ?? 100}
                         value={quantity}
                         onChange={(e) => handleQuantityChange(e.target.value)}
+                        disabled={isOutOfStock}
                         style={{
                             padding: '0.5rem',
                             borderRadius: '4px',
@@ -165,21 +174,21 @@ const ProductInfo = ({ product }) => {
 
             <button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart}
+                disabled={!canAddToCart}
                 style={{
-                    backgroundColor: addedToCart ? 'var(--color-success)' : 'var(--color-action)',
+                    backgroundColor: isOutOfStock ? 'var(--color-text-light)' : addedToCart ? 'var(--color-success)' : 'var(--color-action)',
                     color: 'white',
                     padding: '1rem 2rem',
                     borderRadius: '8px',
                     border: 'none',
                     fontSize: '1.1rem',
                     fontWeight: '600',
-                    cursor: isAddingToCart ? 'not-allowed' : 'pointer',
+                    cursor: canAddToCart ? 'pointer' : 'not-allowed',
                     transition: 'all 0.3s ease',
-                    opacity: isAddingToCart ? 0.75 : 1
+                    opacity: canAddToCart ? 1 : 0.75
                 }}
                 onMouseEnter={(e) => {
-                    if (!addedToCart && !isAddingToCart) {
+                    if (!addedToCart && canAddToCart) {
                         e.currentTarget.style.transform = 'translateY(-2px)';
                         e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.2)';
                     }
@@ -189,7 +198,7 @@ const ProductInfo = ({ product }) => {
                     e.currentTarget.style.boxShadow = 'none';
                 }}
             >
-                {isAddingToCart ? 'Adding...' : addedToCart ? 'Added to Cart' : 'Add to Cart'}
+                {isOutOfStock ? 'Out of Stock' : isAddingToCart ? 'Adding...' : addedToCart ? 'Added to Cart' : 'Add to Cart'}
             </button>
 
             <div>
