@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product, onAddToCart }) => {
-    const { id, name, price, description, inventory, inventoryLoaded } = product || {};
+    const { id, name, price, description, inventory, inventoryLoaded, imageUrls } = product || {};
+    const imageUrl = imageUrls?.[0];
     const navigate = useNavigate();
     const availableQuantity = inventory?.availableQuantity;
     const isOutOfStock = inventoryLoaded && availableQuantity <= 0;
@@ -42,15 +43,14 @@ const ProductCard = ({ product, onAddToCart }) => {
                 alignItems: 'center',
                 justifyContent: 'center'
             }}>
-                <div style={{
-                    fontSize: '3rem',
-                    color: 'var(--color-text-light)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    Box
-                </div>
+                {imageUrl ? (
+                    <img src={imageUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.75rem' }} />
+                ) : (
+                    <div style={{
+                        fontSize: '3rem', color: 'var(--color-text-light)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center'
+                    }}>Box</div>
+                )}
             </div>
 
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>

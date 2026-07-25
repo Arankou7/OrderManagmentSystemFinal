@@ -88,29 +88,25 @@ const refreshAccessToken = async () => {
     throw new Error('No refresh token in storage.');
   }
 
-  try {
-    const response = await axios.post(
-      KEYCLOAK_TOKEN_URL,
-      new URLSearchParams({
-        grant_type: 'refresh_token',
-        client_id: CLIENT_ID,
-        refresh_token: refreshToken,
-      }),
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }
-    );
-
-    const { access_token, refresh_token } = response.data;
-    localStorage.setItem('access_token', access_token);
-    if (refresh_token) {
-      localStorage.setItem('refresh_token', refresh_token);
+  const response = await axios.post(
+    KEYCLOAK_TOKEN_URL,
+    new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: CLIENT_ID,
+      refresh_token: refreshToken,
+    }),
+    {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     }
+  );
 
-    return access_token;
-  } catch (error) {
-    throw error;
+  const { access_token, refresh_token: nextRefreshToken } = response.data;
+  localStorage.setItem('access_token', access_token);
+  if (nextRefreshToken) {
+    localStorage.setItem('refresh_token', nextRefreshToken);
   }
+
+  return access_token;
 };
 
 export default api;

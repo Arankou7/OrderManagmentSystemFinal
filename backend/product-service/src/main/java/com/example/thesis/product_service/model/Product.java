@@ -41,6 +41,20 @@ public class Product {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    /**
+     * Image URLs are stored with the product instead of in the frontend.  This
+     * keeps the catalogue portable while allowing the actual image files to be
+     * hosted by a CDN, object storage service, or a local static-files server.
+     */
+    @OneToMany(
+            mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @OrderColumn(name = "display_order")
+    @Builder.Default
+    private List<ProductImage> images = new ArrayList<>();
+
     @OneToMany(
             mappedBy = "product",
             cascade = CascadeType.ALL,

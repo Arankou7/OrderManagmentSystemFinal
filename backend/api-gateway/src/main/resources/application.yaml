@@ -33,6 +33,11 @@ spring:
           predicates:
             - Path=/api/product/**
 
+        - id: category-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/categories/**
+
         - id: notification-service
           uri: lb://notification-service
           predicates:

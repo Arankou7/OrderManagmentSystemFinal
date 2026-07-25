@@ -45,6 +45,12 @@ public class OrderController {
     public OrderResponse updateOrderStatus(@PathVariable UUID orderNumber, @RequestParam OrderStatus status) {
         return orderService.updateOrderStatus(orderNumber, status);
     }
+
+    @PostMapping("/{orderNumber}/cancel")
+    @ResponseStatus(HttpStatus.OK)
+    public OrderResponse cancelDeliveredOrder(@PathVariable UUID orderNumber) {
+        return orderService.cancelDeliveredOrder(orderNumber);
+    }
     
     @GetMapping("/customer/{email}")
     @ResponseStatus(HttpStatus.OK)

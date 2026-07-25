@@ -27,6 +27,9 @@ const RootLayout = () => {
                     <div style={{ display: 'flex', gap: '1rem', flex: '1 1 260px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Link className="btn btn-outline-light" to="/">Home</Link>
                         <Link className="btn btn-outline-light" to="/orders">Orders</Link>
+                        {(keycloak.hasRealmRole('ADMIN') || keycloak.hasResourceRole('ADMIN')) && (
+                            <Link className="btn btn-warning" to="/admin">Admin panel</Link>
+                        )}
                         <Link className="btn btn-outline-light" to="/cart" style={{ position: 'relative' }}>
                             Cart
                             <span style={{

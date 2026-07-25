@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 
-const ProductImages = ({ productName }) => {
+const ProductImages = ({ productName, imageUrls = [] }) => {
     const [selectedImage, setSelectedImage] = useState(0);
-    const views = ['Main', 'Side', 'Detail', 'Scale'];
+    const hasImages = imageUrls.length > 0;
+    const selectedUrl = imageUrls[selectedImage];
 
     return (
         <div style={{
@@ -20,23 +21,15 @@ const ProductImages = ({ productName }) => {
                 border: '1px solid var(--color-border)',
                 position: 'relative'
             }}>
-                <div style={{
-                    width: '72%',
-                    aspectRatio: '1 / 1',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-card)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    padding: '2rem',
-                    color: 'var(--color-primary)',
-                    fontSize: '2rem',
-                    fontWeight: '700'
-                }}>
-                    {productName || 'Product'}
-                </div>
+                {hasImages ? (
+                    <img src={selectedUrl} alt={`${productName} ${selectedImage + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '1rem' }} />
+                ) : (
+                    <div style={{
+                        width: '72%', aspectRatio: '1 / 1', borderRadius: '8px', border: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-card)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        textAlign: 'center', padding: '2rem', color: 'var(--color-primary)', fontSize: '2rem', fontWeight: '700'
+                    }}>{productName || 'Product'}</div>
+                )}
                 <div style={{
                     position: 'absolute',
                     top: '1rem',
@@ -48,18 +41,18 @@ const ProductImages = ({ productName }) => {
                     fontSize: '0.9rem',
                     fontWeight: '600'
                 }}>
-                    {selectedImage + 1}/{views.length}
+                    {hasImages ? `${selectedImage + 1}/${imageUrls.length}` : 'No image'}
                 </div>
             </div>
 
-            <div style={{
+            {hasImages && <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
                 gap: '0.5rem'
             }}>
-                {views.map((view, index) => (
+                {imageUrls.map((url, index) => (
                     <div
-                        key={view}
+                        key={url}
                         onClick={() => setSelectedImage(index)}
                         style={{
                             backgroundColor: 'var(--color-bg)',
@@ -87,11 +80,9 @@ const ProductImages = ({ productName }) => {
                                 e.currentTarget.style.borderColor = 'var(--color-border)';
                             }
                         }}
-                    >
-                        {view}
-                    </div>
+                    ><img src={url} alt={`${productName} thumbnail ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.25rem', borderRadius: '4px', backgroundColor: 'var(--color-card)' }} /></div>
                 ))}
-            </div>
+            </div>}
         </div>
     );
 };

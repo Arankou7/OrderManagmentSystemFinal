@@ -21,6 +21,7 @@ import java.util.List;
 public class OrderStatusAutomation {
 
     private final OrderRepository orderRepository;
+    private final OrderStatusHistoryService orderStatusHistoryService;
 
     @Value("${orders.status-automation.finish-after-seconds:30}")
     private long finishAfterSeconds;
@@ -38,7 +39,11 @@ public class OrderStatusAutomation {
             return;
         }
 
-        pendingOrders.forEach(order -> order.setStatus(OrderStatus.DELIVERED));
+        pendingOrders.forEach(order -> {
+            order.setStatus(OrderStatus.DELIVERED);
+            order.setDeliveredAt(LocalDateTime.now());
+            orderStatusHistoryService.record(order, OrderStatus.PENDING, OrderStatus.DELIVERED, "SYSTEM", "Automatically advanced by demo status automation");
+        });
         orderRepository.saveAll(pendingOrders);
 
         log.info("Automatically marked {} pending orders as delivered", pendingOrders.size());

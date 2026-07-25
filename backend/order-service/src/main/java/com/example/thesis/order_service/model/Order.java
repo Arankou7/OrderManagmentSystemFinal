@@ -47,6 +47,9 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
@@ -54,6 +57,16 @@ public class Order {
             fetch = FetchType.LAZY
     )
     private List<OrderLineItems> orderLineItems = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @OrderBy("changedAt ASC, id ASC")
+    @Builder.Default
+    private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

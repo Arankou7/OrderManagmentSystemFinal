@@ -46,3 +46,18 @@ export const getMyOrders = async () => {
         throw error;
     }
 };
+
+export const getAllOrders = async () => {
+    const response = await api.get('/order');
+    return response.data;
+};
+
+export const updateOrderStatus = async (orderNumber, status) => {
+    const response = await api.patch(`/order/${orderNumber}/status`, null, { params: { status } });
+    return response.data;
+};
+
+export const cancelOrder = async (orderNumber) => {
+    const response = await api.post(`/order/${orderNumber}/cancel`);
+    return response.data;
+};

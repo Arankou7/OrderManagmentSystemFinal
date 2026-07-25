@@ -26,6 +26,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/order/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/api/order").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/order/*/cancel").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/order/**").hasAnyRole("CUSTOMER", "ADMIN")
 

@@ -34,6 +34,10 @@ export const fetchProducts = {
         const response = await api.get(`/product/sku/${skuCode}`);
         return response.data;
     },
+    getRelatedProducts: async (id, limit = 4) => {
+        const response = await api.get(`/product/${id}/related`, { params: { limit } });
+        return response.data;
+    },
     clearCache: () => {
         productsCache = null;
         productsRequest = null;

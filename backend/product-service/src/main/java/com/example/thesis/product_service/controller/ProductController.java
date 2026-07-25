@@ -3,6 +3,7 @@ package com.example.thesis.product_service.controller;
 
 import com.example.thesis.product_service.dto.ProductRequest;
 import com.example.thesis.product_service.dto.ProductResponse;
+import com.example.thesis.product_service.dto.RelatedProductResponse;
 import com.example.thesis.product_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,15 @@ public class ProductController {
     @ResponseStatus(HttpStatus.OK)
     public ProductResponse getProductBySku(@PathVariable String skuCode){
         return productService.getProductBySku(skuCode);
+    }
+
+    @GetMapping("/{id}/related")
+    @ResponseStatus(HttpStatus.OK)
+    public List<RelatedProductResponse> getRelatedProducts(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "4") int limit
+    ) {
+        return productService.getRelatedProducts(id, limit);
     }
 
 }

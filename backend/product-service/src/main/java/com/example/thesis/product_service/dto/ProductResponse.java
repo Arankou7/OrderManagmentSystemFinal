@@ -8,5 +8,6 @@ import java.util.UUID;
 
 
 public record ProductResponse(UUID id,String skuCode, String name, String description, BigDecimal price,
-                              String category, ProductStatus status, List<ProductAttributeResponse> attributes) {
+                              String category, ProductStatus status, List<ProductAttributeResponse> attributes,
+                              List<String> imageUrls) {
 }

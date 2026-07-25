@@ -12,6 +12,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
 
 const Profile = () => <h2>User Profile</h2>;
 
@@ -28,6 +30,10 @@ function App() {
         { path: "product/:productId", element: <ProductDetail /> },
         { path: "orders", element: <Orders /> },
         { path: "profile", element: <Profile /> },
+        {
+          path: "admin",
+          element: <AdminRoute><AdminDashboard /></AdminRoute>,
+        },
       ],
     },
     {

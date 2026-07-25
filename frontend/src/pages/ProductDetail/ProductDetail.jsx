@@ -130,7 +130,7 @@ const ProductDetail = () => {
                 }}>
                     {/* Images Column */}
                     <div>
-                        <ProductImages productName={product.name} />
+                        <ProductImages productName={product.name} imageUrls={product.imageUrls} />
                     </div>
 
                     {/* Info Column */}
@@ -148,10 +148,7 @@ const ProductDetail = () => {
 
                 {/* Related Products Section */}
                 <div>
-                    <RelatedProducts 
-                        currentProductId={product.id} 
-                        category={product.category}
-                    />
+                    <RelatedProducts currentProductId={product.id} />
                 </div>
             </div>
         </div>

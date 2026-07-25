@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getMyOrders } from '../api/orderApi';
+import { toast } from 'react-toastify';
+import { cancelOrder, getMyOrders } from '../api/orderApi';
 
 const formatCurrency = (value) => `$${Number(value || 0).toFixed(2)}`;
 
@@ -19,6 +20,7 @@ const Orders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [cancellingOrder, setCancellingOrder] = useState(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -62,6 +64,10 @@ const Orders = () => {
                 return { bg: '#e6f4ea', text: '#1e8e3e', border: '#1e8e3e' };
             case 'SHIPPED':
                 return { bg: '#e8f0fe', text: '#1967d2', border: '#1967d2' };
+            case 'PROCESSING':
+                return { bg: '#f3e8ff', text: '#7c3aed', border: '#7c3aed' };
+            case 'PACKED':
+                return { bg: '#ecfeff', text: '#0891b2', border: '#0891b2' };
             case 'PENDING':
                 return { bg: '#fff7ed', text: 'var(--color-action)', border: 'var(--color-action)' };
             case 'CANCELLED':
@@ -78,6 +84,22 @@ const Orders = () => {
         }
 
         return status;
+    };
+
+    const handleCancelOrder = async (order) => {
+        if (!window.confirm('Cancel this order? This action is available before packing, and for 14 days after delivery.')) {
+            return;
+        }
+        setCancellingOrder(order.orderNumber);
+        try {
+            await cancelOrder(order.orderNumber);
+            setOrders(await getMyOrders());
+            toast.success('Order cancelled successfully.');
+        } catch (requestError) {
+            toast.error(requestError.response?.data?.message || 'This order could not be cancelled.');
+        } finally {
+            setCancellingOrder(null);
+        }
     };
 
     if (loading) {
@@ -140,8 +162,21 @@ const Orders = () => {
                                             }}>
                                                 {getStatusLabel(order.status)}
                                             </span>
+                                            {order.cancellationEligible && <button
+                                                className="btn btn-sm btn-outline-danger"
+                                                disabled={cancellingOrder === order.orderNumber}
+                                                onClick={() => handleCancelOrder(order)}
+                                            >
+                                                {cancellingOrder === order.orderNumber ? 'Cancelling...' : 'Cancel order'}
+                                            </button>}
                                         </div>
                                     </div>
+
+                                    {order.cancellationEligible && <p className="small mb-3" style={{ color: 'var(--color-text-light)' }}>
+                                        {order.status === 'DELIVERED'
+                                            ? `You may cancel this delivered order until ${formatDate(order.cancellationDeadline)}.`
+                                            : 'You may cancel this order before it is packed for shipment.'}
+                                    </p>}
 
                                     <div className="list-group list-group-flush">
                                         {order.orderLineItems?.map((item) => {

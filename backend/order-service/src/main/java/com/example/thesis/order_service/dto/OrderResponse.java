@@ -14,5 +14,9 @@ public record OrderResponse(UUID orderNumber,
                             LocalDateTime updatedAt,
                             BigDecimal subtotal,
                             BigDecimal total,
-                            List<OrderLineItemsResponse> orderLineItems) {
+                            List<OrderLineItemsResponse> orderLineItems,
+                            List<OrderStatusHistoryResponse> statusHistory,
+                            List<OrderStatus> allowedNextStatuses,
+                            boolean cancellationEligible,
+                            LocalDateTime cancellationDeadline) {
 }
