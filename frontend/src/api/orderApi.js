@@ -3,31 +3,35 @@ import api from './axiosConfig';
 /**
  * Creates an order from the current cart
  * POST /api/order
- * 
+ *
  * The backend automatically:
  * - Fetches the cart for the authenticated user
  * - Confirms the stock reservation
  * - Creates the order with cart items
  * - Clears the cart
  * - Returns the order response
- * 
+ *
  * @returns {Promise<object>} The order confirmation with orderNumber and status
  * @throws {Error} If the request fails
  */
 export const createOrder = async (idempotencyKey) => {
-    try {
-        // Simply POST to /order with no body - JWT token is in Authorization header
-        // The backend extracts user info from the token and retrieves their cart
-        const response = await api.post('/order', {}, {
-            headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error creating order:', error);
-        console.error('Order API error response:', error.response?.data);
-        console.error('Order API error status:', error.response?.status);
-        throw error;
-    }
+  try {
+    // Simply POST to /order with no body - JWT token is in Authorization header
+    // The backend extracts user info from the token and retrieves their cart
+    const response = await api.post(
+      '/order',
+      {},
+      {
+        headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    console.error('Order API error response:', error.response?.data);
+    console.error('Order API error status:', error.response?.status);
+    throw error;
+  }
 };
 
 /**
@@ -37,27 +41,27 @@ export const createOrder = async (idempotencyKey) => {
  * @throws {Error} If the request fails
  */
 export const getMyOrders = async () => {
-    try {
-        // Axios automatically handles the base URL and Keycloak headers
-        const response = await api.get('/order/my-orders');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        throw error;
-    }
+  try {
+    // Axios automatically handles the base URL and Keycloak headers
+    const response = await api.get('/order/my-orders');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    throw error;
+  }
 };
 
 export const getAllOrders = async () => {
-    const response = await api.get('/order');
-    return response.data;
+  const response = await api.get('/order');
+  return response.data;
 };
 
 export const updateOrderStatus = async (orderNumber, status) => {
-    const response = await api.patch(`/order/${orderNumber}/status`, null, { params: { status } });
-    return response.data;
+  const response = await api.patch(`/order/${orderNumber}/status`, null, { params: { status } });
+  return response.data;
 };
 
 export const cancelOrder = async (orderNumber) => {
-    const response = await api.post(`/order/${orderNumber}/cancel`);
-    return response.data;
+  const response = await api.post(`/order/${orderNumber}/cancel`);
+  return response.data;
 };

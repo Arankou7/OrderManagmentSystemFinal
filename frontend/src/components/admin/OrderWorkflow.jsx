@@ -1,35 +1,327 @@
 import React, { useState } from 'react';
 
-const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'PROCESSING', 'PACKED', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'FAILED'];
+const ORDER_STATUSES = [
+  'PENDING',
+  'CONFIRMED',
+  'PROCESSING',
+  'PACKED',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'FAILED',
+];
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
-const statusColor = (status) => ({ DELIVERED: '#198754', CONFIRMED: '#198754', PROCESSING: '#7c3aed', PACKED: '#0891b2', SHIPPED: '#0d6efd', PENDING: '#fd7e14', CANCELLED: '#dc3545', FAILED: '#dc3545' }[status] || '#6c757d');
+const statusColor = (status) =>
+  ({
+    DELIVERED: '#198754',
+    CONFIRMED: '#198754',
+    PROCESSING: '#7c3aed',
+    PACKED: '#0891b2',
+    SHIPPED: '#0d6efd',
+    PENDING: '#fd7e14',
+    CANCELLED: '#dc3545',
+    FAILED: '#dc3545',
+  })[status] || '#6c757d';
 
 const OrderWorkflow = ({ orders, onUpdateStatus }) => {
-    const [selectedOrder, setSelectedOrder] = useState(null);
-    const [statusDrafts, setStatusDrafts] = useState({});
-    const [savingOrder, setSavingOrder] = useState(null);
-    const history = selectedOrder?.statusHistory?.length ? selectedOrder.statusHistory : selectedOrder ? [{ id: 'legacy-current-status', status: selectedOrder.status, changedAt: selectedOrder.updatedAt || selectedOrder.createdAt, changedBy: 'System', note: 'Current status from an order created before audit history was enabled.' }] : [];
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [statusDrafts, setStatusDrafts] = useState({});
+  const [savingOrder, setSavingOrder] = useState(null);
+  const history = selectedOrder?.statusHistory?.length
+    ? selectedOrder.statusHistory
+    : selectedOrder
+      ? [
+          {
+            id: 'legacy-current-status',
+            status: selectedOrder.status,
+            changedAt: selectedOrder.updatedAt || selectedOrder.createdAt,
+            changedBy: 'System',
+            note: 'Current status from an order created before audit history was enabled.',
+          },
+        ]
+      : [];
 
-    const saveStatus = async (order, status) => {
-        setSavingOrder(order.orderNumber);
-        try {
-            const updated = await onUpdateStatus(order.orderNumber, status);
-            if (updated) {
-                setStatusDrafts((current) => { const next = { ...current }; delete next[order.orderNumber]; return next; });
-            }
-        } finally { setSavingOrder(null); }
-    };
+  const saveStatus = async (order, status) => {
+    setSavingOrder(order.orderNumber);
+    try {
+      const updated = await onUpdateStatus(order.orderNumber, status);
+      if (updated) {
+        setStatusDrafts((current) => {
+          const next = { ...current };
+          delete next[order.orderNumber];
+          return next;
+        });
+      }
+    } finally {
+      setSavingOrder(null);
+    }
+  };
 
-    return <>
-        <div className="card shadow-sm border-0"><div className="card-body p-0"><div className="p-4 pb-2"><h2 className="h4">Order workflow</h2><p className="text-secondary mb-0">Choose a status, then save it. Cancellations and all other changes are added to the audit history.</p></div><div className="table-responsive"><table className="table table-hover align-middle mb-0"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody>
-            {orders.map((order) => { const selectedStatus = statusDrafts[order.orderNumber] ?? order.status; const allowedStatuses = order.allowedNextStatuses ?? ORDER_STATUSES; const statusOptions = [order.status, ...allowedStatuses.filter((status) => status !== order.status)]; const canCancel = allowedStatuses.includes('CANCELLED'); return <tr key={order.orderNumber}><td className="font-monospace small">{order.orderNumber.slice(0, 8)}...</td><td>{order.customerEmail}</td><td>{order.orderLineItems?.reduce((total, item) => total + item.quantity, 0) || 0}</td><td>{money(order.total)}</td><td><div className="d-flex gap-1"><select aria-label={`Status for ${order.orderNumber}`} className="form-select form-select-sm fw-semibold" style={{ color: statusColor(selectedStatus), minWidth: 130 }} value={selectedStatus} onChange={(event) => setStatusDrafts((current) => ({ ...current, [order.orderNumber]: event.target.value }))}>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select><button className="btn btn-sm btn-primary" disabled={savingOrder === order.orderNumber || selectedStatus === order.status} onClick={() => saveStatus(order, selectedStatus)}>{savingOrder === order.orderNumber ? 'Saving' : 'Save'}</button></div></td><td>{new Date(order.createdAt).toLocaleString()}</td><td><div className="btn-group"><button className="btn btn-sm btn-outline-primary text-nowrap" onClick={() => setSelectedOrder(order)}>Details</button>{canCancel && <button className="btn btn-sm btn-outline-danger text-nowrap" onClick={() => saveStatus(order, 'CANCELLED')} disabled={savingOrder === order.orderNumber}>Cancel</button>}</div></td></tr>; })}
-            {orders.length === 0 && <tr><td colSpan="7" className="text-center p-4 text-secondary">No orders have been placed yet.</td></tr>}
-        </tbody></table></div></div></div>
+  return (
+    <>
+      <div className="card shadow-sm border-0">
+        <div className="card-body p-0">
+          <div className="p-4 pb-2">
+            <h2 className="h4">Order workflow</h2>
+            <p className="text-secondary mb-0">
+              Choose a status, then save it. Cancellations and all other changes are added to the
+              audit history.
+            </p>
+          </div>
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => {
+                  const selectedStatus = statusDrafts[order.orderNumber] ?? order.status;
+                  const allowedStatuses = order.allowedNextStatuses ?? ORDER_STATUSES;
+                  const statusOptions = [
+                    order.status,
+                    ...allowedStatuses.filter((status) => status !== order.status),
+                  ];
+                  const canCancel = allowedStatuses.includes('CANCELLED');
+                  return (
+                    <tr key={order.orderNumber}>
+                      <td className="font-monospace small">{order.orderNumber.slice(0, 8)}...</td>
+                      <td>{order.customerEmail}</td>
+                      <td>
+                        {order.orderLineItems?.reduce((total, item) => total + item.quantity, 0) ||
+                          0}
+                      </td>
+                      <td>{money(order.total)}</td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <select
+                            aria-label={`Status for ${order.orderNumber}`}
+                            className="form-select form-select-sm fw-semibold"
+                            style={{ color: statusColor(selectedStatus), minWidth: 130 }}
+                            value={selectedStatus}
+                            onChange={(event) =>
+                              setStatusDrafts((current) => ({
+                                ...current,
+                                [order.orderNumber]: event.target.value,
+                              }))
+                            }
+                          >
+                            {statusOptions.map((status) => (
+                              <option key={status}>{status}</option>
+                            ))}
+                          </select>
+                          <button
+                            className="btn btn-sm btn-primary"
+                            disabled={
+                              savingOrder === order.orderNumber || selectedStatus === order.status
+                            }
+                            onClick={() => saveStatus(order, selectedStatus)}
+                          >
+                            {savingOrder === order.orderNumber ? 'Saving' : 'Save'}
+                          </button>
+                        </div>
+                      </td>
+                      <td>{new Date(order.createdAt).toLocaleString()}</td>
+                      <td>
+                        <div className="btn-group">
+                          <button
+                            className="btn btn-sm btn-outline-primary text-nowrap"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            Details
+                          </button>
+                          {canCancel && (
+                            <button
+                              className="btn btn-sm btn-outline-danger text-nowrap"
+                              onClick={() => saveStatus(order, 'CANCELLED')}
+                              disabled={savingOrder === order.orderNumber}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {orders.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="text-center p-4 text-secondary"
+                    >
+                      No orders have been placed yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-        {selectedOrder && <div role="presentation" onMouseDown={() => setSelectedOrder(null)} style={{ position: 'fixed', inset: 0, zIndex: 1050, backgroundColor: 'rgba(15, 23, 42, 0.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}><div role="dialog" aria-modal="true" aria-labelledby="order-details-title" onMouseDown={(event) => event.stopPropagation()} style={{ width: 'min(760px, 100%)', maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'var(--color-card)', borderRadius: '12px', boxShadow: '0 24px 70px rgba(15, 23, 42, 0.35)' }}><div className="p-4 border-bottom d-flex justify-content-between align-items-start gap-3"><div><p className="text-uppercase small fw-bold mb-1" style={{ color: 'var(--color-action)' }}>Order details</p><h2 id="order-details-title" className="h4 mb-0">Order #{selectedOrder.orderNumber}</h2></div><button className="btn btn-sm btn-outline-secondary" aria-label="Close order details" onClick={() => setSelectedOrder(null)}>Close</button></div><div className="p-4"><div className="row g-3 mb-4"><div className="col-md-6"><div className="small text-secondary text-uppercase fw-semibold">Customer</div><div className="fw-semibold">{selectedOrder.customerEmail}</div></div><div className="col-md-6"><div className="small text-secondary text-uppercase fw-semibold">Status</div><div className="fw-bold" style={{ color: statusColor(selectedOrder.status) }}>{selectedOrder.status}</div></div><div className="col-md-6"><div className="small text-secondary text-uppercase fw-semibold">Created</div><div>{new Date(selectedOrder.createdAt).toLocaleString()}</div></div><div className="col-md-6"><div className="small text-secondary text-uppercase fw-semibold">Last updated</div><div>{selectedOrder.updatedAt ? new Date(selectedOrder.updatedAt).toLocaleString() : 'Not available'}</div></div></div>
-            <div className="small text-secondary text-uppercase fw-semibold mb-2">Status history</div><ul className="list-group mb-4">{history.map((entry) => <li className="list-group-item" key={entry.id}><div className="d-flex justify-content-between gap-3 flex-wrap"><strong style={{ color: statusColor(entry.status) }}>{entry.previousStatus ? `${entry.previousStatus} → ${entry.status}` : entry.status}</strong><span className="small text-secondary">{entry.changedAt ? new Date(entry.changedAt).toLocaleString() : 'Time not available'}</span></div><div className="small">Changed by {entry.changedBy || 'System'}</div>{entry.note && <div className="small text-secondary mt-1">{entry.note}</div>}</li>)}</ul>
-            <div className="small text-secondary text-uppercase fw-semibold mb-2">Items ordered</div><div className="table-responsive"><table className="table align-middle"><thead><tr><th>Product</th><th>SKU</th><th className="text-end">Unit price</th><th className="text-end">Qty</th><th className="text-end">Line total</th></tr></thead><tbody>{selectedOrder.orderLineItems?.map((item) => <tr key={item.id || item.skuCode}><td className="fw-semibold">{item.productName || 'Product'}</td><td className="font-monospace small">{item.skuCode}</td><td className="text-end">{money(item.price)}</td><td className="text-end">{item.quantity}</td><td className="text-end">{money(item.lineTotal ?? item.price * item.quantity)}</td></tr>)}</tbody></table></div><div className="border-top pt-3 d-flex justify-content-end gap-4 flex-wrap"><span className="text-secondary">Subtotal: <strong>{money(selectedOrder.subtotal)}</strong></span><span className="fw-bold" style={{ color: 'var(--color-primary)' }}>Total: <span style={{ color: 'var(--color-action)' }}>{money(selectedOrder.total)}</span></span></div></div></div></div>}
-    </>;
+      {selectedOrder && (
+        <div
+          role="presentation"
+          onMouseDown={() => setSelectedOrder(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1050,
+            backgroundColor: 'rgba(15, 23, 42, 0.58)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-details-title"
+            onMouseDown={(event) => event.stopPropagation()}
+            style={{
+              width: 'min(760px, 100%)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              backgroundColor: 'var(--color-card)',
+              borderRadius: '12px',
+              boxShadow: '0 24px 70px rgba(15, 23, 42, 0.35)',
+            }}
+          >
+            <div className="p-4 border-bottom d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <p
+                  className="text-uppercase small fw-bold mb-1"
+                  style={{ color: 'var(--color-action)' }}
+                >
+                  Order details
+                </p>
+                <h2
+                  id="order-details-title"
+                  className="h4 mb-0"
+                >
+                  Order #{selectedOrder.orderNumber}
+                </h2>
+              </div>
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                aria-label="Close order details"
+                onClick={() => setSelectedOrder(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="row g-3 mb-4">
+                <div className="col-md-6">
+                  <div className="small text-secondary text-uppercase fw-semibold">Customer</div>
+                  <div className="fw-semibold">{selectedOrder.customerEmail}</div>
+                </div>
+                <div className="col-md-6">
+                  <div className="small text-secondary text-uppercase fw-semibold">Status</div>
+                  <div
+                    className="fw-bold"
+                    style={{ color: statusColor(selectedOrder.status) }}
+                  >
+                    {selectedOrder.status}
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="small text-secondary text-uppercase fw-semibold">Created</div>
+                  <div>{new Date(selectedOrder.createdAt).toLocaleString()}</div>
+                </div>
+                <div className="col-md-6">
+                  <div className="small text-secondary text-uppercase fw-semibold">
+                    Last updated
+                  </div>
+                  <div>
+                    {selectedOrder.updatedAt
+                      ? new Date(selectedOrder.updatedAt).toLocaleString()
+                      : 'Not available'}
+                  </div>
+                </div>
+              </div>
+              <div className="small text-secondary text-uppercase fw-semibold mb-2">
+                Status history
+              </div>
+              <ul className="list-group mb-4">
+                {history.map((entry) => (
+                  <li
+                    className="list-group-item"
+                    key={entry.id}
+                  >
+                    <div className="d-flex justify-content-between gap-3 flex-wrap">
+                      <strong style={{ color: statusColor(entry.status) }}>
+                        {entry.previousStatus
+                          ? `${entry.previousStatus} → ${entry.status}`
+                          : entry.status}
+                      </strong>
+                      <span className="small text-secondary">
+                        {entry.changedAt
+                          ? new Date(entry.changedAt).toLocaleString()
+                          : 'Time not available'}
+                      </span>
+                    </div>
+                    <div className="small">Changed by {entry.changedBy || 'System'}</div>
+                    {entry.note && <div className="small text-secondary mt-1">{entry.note}</div>}
+                  </li>
+                ))}
+              </ul>
+              <div className="small text-secondary text-uppercase fw-semibold mb-2">
+                Items ordered
+              </div>
+              <div className="table-responsive">
+                <table className="table align-middle">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>SKU</th>
+                      <th className="text-end">Unit price</th>
+                      <th className="text-end">Qty</th>
+                      <th className="text-end">Line total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.orderLineItems?.map((item) => (
+                      <tr key={item.id || item.skuCode}>
+                        <td className="fw-semibold">{item.productName || 'Product'}</td>
+                        <td className="font-monospace small">{item.skuCode}</td>
+                        <td className="text-end">{money(item.price)}</td>
+                        <td className="text-end">{item.quantity}</td>
+                        <td className="text-end">
+                          {money(item.lineTotal ?? item.price * item.quantity)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="border-top pt-3 d-flex justify-content-end gap-4 flex-wrap">
+                <span className="text-secondary">
+                  Subtotal: <strong>{money(selectedOrder.subtotal)}</strong>
+                </span>
+                <span
+                  className="fw-bold"
+                  style={{ color: 'var(--color-primary)' }}
+                >
+                  Total:{' '}
+                  <span style={{ color: 'var(--color-action)' }}>{money(selectedOrder.total)}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default OrderWorkflow;
