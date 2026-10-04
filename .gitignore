@@ -28,3 +28,9 @@ coverage/
 # --- System Files ---
 .DS_Store
 Thumbs.db
+
+# --- Final thesis files only ---
+/documentation/*
+!/documentation/Thesis_Order_Management_System_Revised.docx
+!/documentation/Thesis_Order_Management_System_Revised.pdf
+/tmp/
